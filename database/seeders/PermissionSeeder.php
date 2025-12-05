@@ -18,6 +18,7 @@ class PermissionSeeder extends Seeder
             'Manage Settings',
             'Access Admin Dashboard',
             'Manage Inventory',
+            'View Reporrts'
         ];
 
         foreach ($permissions as $permissionName) {
