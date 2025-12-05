@@ -21,6 +21,7 @@
     "dependencies": {
         "@fortawesome/fontawesome-free": "^7.1.0",
         "@vitejs/plugin-vue": "^6.0.2",
-        "vue": "^3.5.25"
+        "vue": "^3.5.25",
+        "vue-toastification": "^2.0.0-rc.5"
     }
 }

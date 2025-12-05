@@ -1,0 +1,331 @@
+
+#sidebar.w-20 .sidebar-label,
+#sidebar.w-20 .expanded-only {
+  display: none !important;
+}
+
+.sidebar-logo-full { opacity: 1; transition: opacity .18s ease; }
+.sidebar-logo-icon { opacity: 0; transition: opacity .18s ease; }
+
+#sidebar[data-mini="true"] .sidebar-logo-full {
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+#sidebar[data-mini="true"] .sidebar-logo-icon {
+  opacity: 1;
+  display: block;
+}
+#sidebar[data-mini="false"] .sidebar-logo-icon {
+  display: none;
+}
+
+#toggleSidebar i {
+  transition: transform .25s ease;
+}
+#toggleSidebar[data-mini="true"] i {
+  transform: rotate(180deg);
+}
+
+#subSidebar.sub-open {
+  animation: subSlide .18s ease;
+}
+@keyframes subSlide {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.body-lock {
+  overflow: hidden;
+  touch-action: none;
+}
+
+@media (max-width: 1023.5px) {
+  #sidebar { width: 17rem; }
+}
+
+.sidebar-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .95rem;
+  line-height: 1;
+  transition: all .18s ease;
+  /* Remove any leftover inline padding from old utilities */
+  padding: 0;
+  background: transparent;
+  color: inherit;
+}
+
+/* ---------- Expanded Mode (data-mini="false") ---------- */
+#sidebar[data-mini="false"] .dropdown-toggle {
+  padding: .55rem .65rem; /* tighter vertical */
+  gap: .65rem;
+}
+
+/* Inline icons – no tile */
+#sidebar[data-mini="false"] .sidebar-icon-box {
+  width: 1.1rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  font-size: 1rem;
+  color: #374151; /* gray-700 */
+}
+
+.dark #sidebar[data-mini="false"] .sidebar-icon-box {
+  color: #e5e7eb; /* light text for dark mode */
+}
+
+/* Hover effect (expanded) focuses row, not icon tile */
+#sidebar[data-mini="false"] .dropdown-toggle:hover {
+  background: #f3f4f6; /* gray-100 */
+}
+.dark #sidebar[data-mini="false"] .dropdown-toggle:hover {
+  background: #1e293b; /* slate-800 */
+}
+
+/* Remove big square backgrounds in expanded mode if any persist */
+#sidebar[data-mini="false"] .sidebar-icon-box,
+#sidebar[data-mini="false"] .sidebar-icon-box:hover {
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+/* Label text tightening */
+#sidebar[data-mini="false"] .sidebar-label {
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .25px;
+  color: #374151;
+}
+.dark #sidebar[data-mini="false"] .sidebar-label {
+  color: #f1f5f9;
+}
+
+/* Chevron sizing tweak */
+#sidebar[data-mini="false"] .dropdown-toggle .fa-chevron-down {
+  font-size: .55rem;
+  transition: transform .25s ease;
+}
+
+/* Expanded dropdown link items (inside .expanded-only) */
+#sidebar[data-mini="false"] .expanded-only a {
+  padding: .45rem .85rem;
+  font-size: .70rem;
+  letter-spacing: .2px;
+  border-radius: .45rem;
+  line-height: 1.05rem;
+}
+#sidebar[data-mini="false"] .expanded-only a:hover {
+  background: #f3f4f6;
+}
+.dark #sidebar[data-mini="false"] .expanded-only a:hover {
+  background: #1e293b;
+}
+
+/* ---------- Mini Mode (data-mini="true") ---------- */
+/* Keep tile style ONLY in mini mode */
+#sidebar[data-mini="true"] .sidebar-icon-box {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: .4rem;
+  font-size: 1rem;
+  background: #e5e7eb;
+  color: #111827;
+  padding: 0;
+}
+.dark #sidebar[data-mini="true"] .sidebar-icon-box {
+  background: #1e293b;
+  color: #f8fafc;
+}
+
+/* Slight hover pulse for mini tiles */
+#sidebar[data-mini="true"] .dropdown-toggle:hover .sidebar-icon-box {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,.15);
+}
+
+/* In mini mode we hide labels already via your existing CSS */
+#sidebar[data-mini="true"] .dropdown-toggle {
+  justify-content: center;
+  padding: .55rem 0;
+}
+
+/* Chevron hidden in mini (labels hidden anyway) */
+#sidebar[data-mini="true"] .dropdown-toggle .fa-chevron-down {
+  display: none !important;
+}
+
+/* Sub-sidebar inherits small text */
+#subSidebar {
+  font-size: .72rem;
+}
+#subSidebar a {
+  padding: .45rem .85rem;
+  font-size: .70rem;
+  border-radius: .45rem;
+  line-height: 1.05rem;
+}
+#subSidebar a:hover {
+  background: #f3f4f6;
+}
+.dark #subSidebar a:hover {
+  background: #1e293b;
+}
+
+/* Animation refinement */
+#subSidebar.sub-open {
+  animation: subSlide .18s ease;
+}
+
+/* Optional: smooth rotate for chevron in expanded mode when open */
+#sidebar[data-mini="false"] .dropdown-toggle .fa-chevron-down.rotate-180 {
+  transform: rotate(180deg);
+}
+
+/* --- Theme Menu Animation --- */
+@keyframes fadeInScale {
+  from { opacity: 0; transform: translateY(4px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-fade { animation: fadeInScale .15s ease; }
+
+.theme-swatch {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  width: 100%;
+  background: transparent;
+  padding: .4rem .5rem;
+  border-radius: .5rem;
+  font-size: .65rem;
+  font-weight: 600;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+  line-height: 1;
+  color: #334155;
+  transition: background .15s ease, color .15s ease;
+}
+.dark .theme-swatch { color: #cbd5e1; }
+.theme-swatch:hover {
+  background: #f1f5f9;
+}
+.dark .theme-swatch:hover {
+  background: #1e293b;
+}
+.theme-swatch .swatch-color {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: .35rem;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.15);
+  flex-shrink: 0;
+}
+
+.theme-swatch.active {
+  outline: 2px solid #6366f1;
+  outline-offset: 1px;
+}
+
+#themeMenu { z-index: 60; }
+
+/* Highlight currently active theme on load (JS will add .active) */
+
+/* ---- Sidebar Theme Variant Generic Base ---- */
+#sidebar[data-theme] {
+  /* Remove default bg so custom wins */
+  background-image: none;
+}
+
+/* We’ll compute dynamic logo swap via JS; text/icon colors via theme classes below */
+
+/* ---- Individual Themes ---- */
+#sidebar[data-theme="blue"] {
+  background: #1d4ed8;
+}
+#sidebar[data-theme="black"] {
+  background: #111827;
+}
+#sidebar[data-theme="dark-blue"] {
+  background: #0f172a;
+}
+#sidebar[data-theme="green"] {
+  background: #047857;
+}
+#sidebar[data-theme="light-blue"] {
+  background: #e0f2fe;
+  border-right: 1px solid #bae6fd;
+}
+
+/* Text/Icon Color Strategies */
+#sidebar[data-theme]:not([data-theme="light-blue"]) .dropdown-toggle,
+#sidebar[data-theme]:not([data-theme="light-blue"]) .expanded-only a,
+#sidebar[data-theme]:not([data-theme="light-blue"]) .sidebar-label,
+#sidebar[data-theme]:not([data-theme="light-blue"]) .sidebar-icon-box {
+  color: #f1f5f9 !important;
+}
+#sidebar[data-theme]:not([data-theme="light-blue"]) .dropdown-toggle:hover {
+  background: rgba(255,255,255,.08);
+}
+#sidebar[data-theme]:not([data-theme="light-blue"]) .expanded-only a:hover {
+  background: rgba(255,255,255,.08);
+}
+
+/* Light theme -> dark text */
+#sidebar[data-theme="light-blue"] .dropdown-toggle,
+#sidebar[data-theme="light-blue"] .expanded-only a,
+#sidebar[data-theme="light-blue"] .sidebar-label,
+#sidebar[data-theme="light-blue"] .sidebar-icon-box {
+  color: #1e293b !important;
+}
+#sidebar[data-theme="light-blue"] .dropdown-toggle:hover,
+#sidebar[data-theme="light-blue"] .expanded-only a:hover {
+  background: rgba(0,0,0,.06);
+}
+
+/* Mini mode tile override to keep contrast */
+#sidebar[data-theme]:not([data-theme="light-blue"])[data-mini="true"] .sidebar-icon-box {
+  background: rgba(255,255,255,.15);
+  color: #f8fafc;
+}
+#sidebar[data-theme="light-blue"][data-mini="true"] .sidebar-icon-box {
+  background: #bae6fd;
+  color: #0f172a;
+}
+
+/* Ensure chevron visible on dark backgrounds */
+#sidebar[data-theme]:not([data-theme="light-blue"]) .fa-chevron-down {
+  color: #f1f5f9 !important;
+}
+
+/* Active theme ring inside menu (JS adds .active or we could rely on attribute) */
+/* General menu item style */
+.user-menu .menu-item {
+  display: block;
+  padding: .55rem 1rem;
+  text-decoration: none;
+  border-radius: .45rem;
+  line-height: 1.1;
+  transition: background .15s ease, color .15s ease;
+}
+
+.user-menu .menu-item:hover,
+.user-menu .menu-item:focus {
+  background: #e2e8f0; /* gray-300/200 region */
+  color: #1e293b;
+}
+.dark .user-menu .menu-item:hover,
+.dark .user-menu .menu-item:focus {
+  background: rgba(255,255,255,.15);
+  color: #f1f5f9;
+}
+
+/* Visible state */
+.user-menu.show {
+  opacity: 1 !important;
+  transform: scale(1) !important;
+  pointer-events: auto !important;
+}
+
+/* Hidden state (initial) already via inline classes: opacity-0 scale-95 */
