@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Facility;
 
 class GenaralController extends Controller
 {
@@ -17,6 +18,17 @@ class GenaralController extends Controller
 
 
         return view('site.about');
+    }
+
+    public function facilities(){
+
+
+        return view('site.facilities');
+    }
+
+    public function facilityShowPublic(Facility $facility)
+    {
+        return view('site.facilities.show', compact('facility'));
     }
 
     public function contact(){

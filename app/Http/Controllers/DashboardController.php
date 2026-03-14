@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Facility;
 
 class DashboardController extends Controller
 {
-    public function getAdminDashboard(){
+    public function getAdminDashboard()
+    {
+        $facilities = Facility::with('primaryImage')->latest()->take(6)->get();
+        $facilityCount = Facility::count();
 
-
-        return view('dashboards.admin.dashboard');
+        return view('dashboards.admin.dashboard', compact('facilities', 'facilityCount'));
     }
 }

@@ -32,6 +32,33 @@
       <!-- Nav -->
       <nav class="mt-4 space-y-1 px-3">
 
+        @can('Manage Settings')
+        <!-- Facility Manager -->
+        <div class="relative sidebar-dropdown"
+            data-subtitle="Facility Manager"
+            data-links='[
+              {"label":"Facilities","href":"{{ route('facilityManagement') }}"}
+            ]'>
+
+          <button class="dropdown-toggle dark:border-cyan-600 w-full flex items-center gap-3 p-2 dark:hover:bg-slate-800 transition-all">
+            <div class="sidebar-icon-box">
+              <i class="fas fa-building" aria-hidden="true"></i>
+              <span class="sr-only">Facility Manager</span>
+            </div>
+            <span class="sidebar-label flex-1 text-sm font-medium text-cyan-700 dark:text-white text-left">
+              Facility Manager
+            </span>
+            <i class="fas fa-chevron-down text-xs text-cyan-500 sidebar-label"></i>
+          </button>
+
+          <div class="expanded-only hidden py-1 ml-4 space-y-1">
+            <a href="{{ route('facilityManagement') }}" class="block px-4 py-2 text-xs font-semibold text-cyan-700 dark:text-cyan-300 hover:bg-cyan-100 dark:hover:bg-slate-700 rounded-md">
+              Facilities
+            </a>
+          </div>
+        </div>
+        @endcan
+
         @can('Manage Inventory')
         <!-- Call Center -->
         <div class="relative sidebar-dropdown"
@@ -93,6 +120,7 @@
             </a>
           </div>
         </div>
+
         @endcan
 
       </nav>
