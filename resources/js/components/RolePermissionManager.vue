@@ -1,148 +1,141 @@
 <template>
-  <div class="flex flex-col lg:flex-row w-full gap-3 p-3">
-    <!-- Left Column: Roles -->
-    <div class="w-full lg:w-4/12 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-      <h2 class="text-lg font-bold mb-4 dark:text-white flex items-center gap-2">
-        <i class="fas fa-user-shield text-cyan-500"></i>
-        Roles
-      </h2>
+  <section class="p-3 sm:p-4">
+    <div class="flex flex-col gap-4 rounded-2xl border border-slate-200/70 bg-gradient-to-br from-sky-50 to-white p-4 xl:flex-row dark:border-slate-700 dark:from-slate-900 dark:to-slate-950">
+      <aside class="w-full rounded-2xl border border-slate-200 bg-white/90 p-4 xl:w-[340px] dark:border-slate-700 dark:bg-slate-950/80">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-700 dark:text-sky-300">Access Control</p>
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Roles</h2>
+          </div>
+          <span class="inline-flex h-9 min-w-9 items-center justify-center rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-2 text-sm font-bold text-white">{{ roles.length }}</span>
+        </div>
 
-      <!-- Floating Label Input + Add -->
-      <div class="flex items-center gap-2 mb-6">
-         <div class="relative w-full">
+        <div class="mt-4 flex gap-2">
           <input
-            type="text"
             id="role_name"
             v-model="roleForm.name"
-            class="block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 bg-transparent rounded-lg border border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-cyan-500 focus:outline-none focus:ring-0 focus:border-cyan-600 peer"
-            placeholder=" "
+            type="text"
+            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-sky-200 transition focus:ring-2 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+            placeholder="Create new role"
+            @keyup.enter="saveRole"
           />
-          <label
-            for="role_name"
-            class="absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white dark:bg-gray-800 px-2
-              peer-focus:px-2 peer-focus:text-cyan-600 peer-focus:dark:text-cyan-500
-              peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2
-              peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4"
-          >
-            Create Role
-          </label>
+          <button @click="saveRole" class="rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110">Add</button>
         </div>
-        <button
-          @click="saveRole"
-          class="bg-gradient-to-tr uppercase text-sm font-bold from-cyan-600 to-cyan-400 text-white px-4 py-3 rounded-lg hover:opacity-90 transition whitespace-nowrap"
-        >
-          + Create
-        </button>
-      </div>
 
-      <!-- Role Radio List -->
-      <ul class="grid w-full gap-4">
-        <li v-for="role in roles" :key="role.id">
-          <input
-            type="radio"
-            :id="'role-' + role.id"
-            name="role"
-            :value="role.id"
-            v-model="selectedRoleId"
-            class="hidden peer"
-            @change="selectRole(role)"
-          />
-          <label
-            :for="'role-' + role.id"
-            class="inline-flex items-center justify-between w-full p-5 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer
-                   dark:hover:text-gray-300 dark:border-gray-700 dark:peer-checked:text-cyan-500
-                   peer-checked:border-cyan-600 dark:peer-checked:border-cyan-600 peer-checked:text-cyan-600
-                   hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700 transition"
+        <div class="mt-4 grid max-h-[56vh] gap-2 overflow-y-auto pr-1">
+          <button
+            v-for="role in roles"
+            :key="role.id"
+            type="button"
+            class="flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left transition"
+            :class="selectedRoleId === role.id
+              ? 'border-sky-500 bg-sky-50 ring-2 ring-sky-200 dark:border-sky-500/60 dark:bg-sky-500/10 dark:ring-sky-500/20'
+              : 'border-slate-200 bg-white hover:border-sky-400 dark:border-slate-700 dark:bg-slate-900/70 dark:hover:border-sky-500/50'"
+            @click="selectRole(role)"
           >
             <div>
-              <div class="text-lg font-semibold capitalize">{{ role.name }}</div>
-              <div class="text-sm">System Role</div>
+              <p class="font-semibold text-slate-800 dark:text-slate-100">{{ toTitle(role.name) }}</p>
+              <p class="text-xs text-slate-500">System role</p>
             </div>
-            <svg class="w-5 h-5 ms-3 rtl:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
-              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/>
-            </svg>
-          </label>
-        </li>
-      </ul>
+            <i class="fa-solid fa-arrow-right text-xs text-sky-600" aria-hidden="true"></i>
+          </button>
+          <p v-if="!roles.length" class="text-sm text-slate-500">No roles found yet.</p>
+        </div>
 
-      <!-- Delete Role -->
-      <div v-if="selectedRole" class="mt-5">
         <button
+          v-if="selectedRole"
           @click="confirmDelete(selectedRole)"
-          class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition w-full"
+          class="mt-4 w-full rounded-xl bg-gradient-to-r from-red-600 to-red-500 px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
         >
           Delete "{{ selectedRole.name }}"
         </button>
-      </div>
-    </div>
+      </aside>
 
-    <!-- Right Column: Permissions -->
-    <div v-if="selectedRole" class="w-full lg:w-8/12 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-      <h2 class="text-lg font-bold mb-6 dark:text-white flex items-center gap-2">
-        <i class="fas fa-lock text-cyan-500"></i>
-        Permissions for "{{ selectedRole.name }}"
-      </h2>
+      <main class="flex-1 rounded-2xl border border-slate-200 bg-white/90 p-4 dark:border-slate-700 dark:bg-slate-950/80">
+        <div v-if="selectedRole">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-700 dark:text-sky-300">Permission Matrix</p>
+              <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Permissions for {{ toTitle(selectedRole.name) }}</h2>
+            </div>
+            <span class="inline-flex items-center rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-1 text-sm font-semibold text-white">{{ grantedCount }} Active</span>
+          </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <div
-          v-for="perm in permissions"
-          :key="perm.id"
-          class="flex items-center justify-between p-4 border border-gray-200 rounded-lg dark:border-gray-700 dark:bg-gray-800 bg-white hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-        >
-          <span class="text-sm font-medium text-gray-800 dark:text-gray-200">
-            {{ perm.name }}
-          </span>
-
-          <!-- Custom cyan Toggle -->
-          <label class="inline-flex items-center cursor-pointer">
+          <div class="mt-4">
             <input
-              type="checkbox"
-              class="sr-only peer"
-              :value="perm.name"
-              v-model="permissionState[perm.name]"
-              @change="togglePermission(perm)"
+              v-model="permissionQuery"
+              type="text"
+              class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-sky-200 transition focus:ring-2 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+              placeholder="Search permissions"
             />
-            <div
-              class="relative w-11 h-6 rounded-full bg-gray-200 dark:bg-gray-700 transition-all duration-300
-                     after:content-[''] after:absolute after:top-0.5 after:start-[2px]
-                     after:w-5 after:h-5 after:bg-white after:rounded-full after:shadow-md after:transition-all
-                     peer-focus:ring-4 peer-focus:ring-cyan-300 dark:peer-focus:ring-cyan-800
-                     peer-checked:bg-cyan-600 dark:peer-checked:bg-cyan-600
-                     peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full"
-            ></div>
-          </label>
+          </div>
+
+          <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <label
+              v-for="perm in filteredPermissions"
+              :key="perm.id"
+              class="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 transition hover:border-amber-400 dark:border-slate-700 dark:bg-slate-900/70 dark:hover:border-amber-500/50"
+            >
+              <div>
+                <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ toTitle(perm.name.replaceAll('-', ' ')) }}</p>
+                <p class="text-xs text-slate-500">{{ perm.name }}</p>
+              </div>
+
+              <input
+                type="checkbox"
+                class="peer sr-only"
+                :value="perm.name"
+                v-model="permissionState[perm.name]"
+                @change="togglePermission(perm)"
+              />
+              <span class="relative h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-gradient-to-r peer-checked:from-amber-500 peer-checked:to-orange-500 dark:bg-slate-700">
+                <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5"></span>
+              </span>
+            </label>
+          </div>
+
+          <p v-if="!filteredPermissions.length" class="mt-5 text-sm text-slate-500">
+            No permissions match "{{ permissionQuery }}".
+          </p>
         </div>
-      </div>
+
+        <div v-else class="grid min-h-[45vh] place-content-center text-center">
+          <i class="fa-solid fa-shield-halved text-2xl text-sky-500" aria-hidden="true"></i>
+          <p class="mt-3 text-base font-semibold text-slate-900 dark:text-white">Select a role to manage permissions</p>
+          <p class="mt-1 text-sm text-slate-500">Choose any role from the left panel to start updating access.</p>
+        </div>
+      </main>
     </div>
 
-    <!-- Empty State -->
-    <div v-else class="w-full lg:w-8/12 flex items-center justify-center text-gray-500 dark:text-gray-300">
-      <p class="text-lg italic">Select a role to view permissions</p>
-    </div>
-
-    <!-- Delete Modal -->
-    <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl w-80 text-center">
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Confirm Delete</h3>
-        <p class="text-gray-500 dark:text-gray-300 mb-4">
-          Are you sure you want to delete <b>{{ roleToDelete?.name }}</b>?
-        </p>
-        <div class="flex justify-center gap-3">
-          <button @click="deleteRole" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:opacity-90">Delete</button>
-          <button
-            @click="showDeleteModal = false"
-            class="border border-gray-300 px-4 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            Cancel
-          </button>
+    <transition
+      enter-active-class="transition-opacity duration-200"
+      enter-from-class="opacity-0"
+      leave-active-class="transition-opacity duration-200"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div class="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 text-center dark:border-slate-700 dark:bg-slate-900">
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Delete Role</h3>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            Are you sure you want to delete <b>{{ roleToDelete?.name }}</b>?
+          </p>
+          <div class="mt-5 flex justify-center gap-2">
+            <button @click="deleteRole" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700">Delete</button>
+            <button
+              @click="showDeleteModal = false"
+              class="rounded-lg border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
+    </transition>
+  </section>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useToast } from 'vue-toastification'
 
@@ -156,22 +149,48 @@ const selectedRoleId = ref(null)
 const permissionState = ref({})
 const showDeleteModal = ref(false)
 const roleToDelete = ref(null)
+const permissionQuery = ref('')
+
+const filteredPermissions = computed(() => {
+  const q = permissionQuery.value.trim().toLowerCase()
+  if (!q) return permissions.value
+  return permissions.value.filter((p) => p.name.toLowerCase().includes(q))
+})
+
+const grantedCount = computed(() => {
+  return Object.values(permissionState.value).filter(Boolean).length
+})
 
 const loadRoles = async () => {
-  const res = await axios.get('/api/roles')
-  roles.value = res.data
+  try {
+    const res = await axios.get('/api/roles')
+    roles.value = res.data
+  } catch {
+    toast.error('Unable to load roles')
+  }
 }
 
 const loadPermissions = async () => {
-  const res = await axios.get('/api/permissions')
-  permissions.value = res.data
+  try {
+    const res = await axios.get('/api/permissions')
+    permissions.value = res.data
+  } catch {
+    toast.error('Unable to load permissions')
+  }
 }
 
-// Create Role
+const toTitle = (value) => {
+  return String(value || '')
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
 const saveRole = async () => {
-  if (!roleForm.value.name) return toast.error('Role name required')
+  const name = roleForm.value.name.trim()
+  if (!name) return toast.error('Role name required')
   try {
-    await axios.post('/api/roles', roleForm.value)
+    await axios.post('/api/roles', { name })
     toast.success('Role created successfully')
     roleForm.value.name = ''
     await loadRoles()
@@ -180,21 +199,25 @@ const saveRole = async () => {
   }
 }
 
-// Select Role + load permissions state
 const selectRole = async (role) => {
-  const res = await axios.get(`/api/roles/${role.id}`)
-  selectedRole.value = res.data.role
-  const assigned = res.data.permissions
-  permissionState.value = {}
-  permissions.value.forEach((p) => {
-    permissionState.value[p.name] = assigned.includes(p.name)
-  })
+  try {
+    const res = await axios.get(`/api/roles/${role.id}`)
+    selectedRole.value = res.data.role
+    selectedRoleId.value = role.id
+    const assigned = res.data.permissions
+    permissionState.value = {}
+    permissions.value.forEach((p) => {
+      permissionState.value[p.name] = assigned.includes(p.name)
+    })
+  } catch {
+    toast.error('Unable to load role details')
+  }
 }
 
-// Toggle Permission and Auto Sync
 const togglePermission = async (perm) => {
   if (!selectedRole.value) return
   const permName = perm.name
+  const previous = !permissionState.value[permName]
   const active = permissionState.value[permName]
 
   const assigned = Object.keys(permissionState.value).filter((p) => permissionState.value[p])
@@ -203,16 +226,18 @@ const togglePermission = async (perm) => {
     await axios.post(`/api/roles/${selectedRole.value.id}/sync`, { permissions: assigned })
     toast.success(`${permName} ${active ? 'granted' : 'revoked'}`)
   } catch {
+    permissionState.value[permName] = previous
     toast.error('Error syncing permission')
   }
 }
 
-// Delete Role
 const confirmDelete = (role) => {
   roleToDelete.value = role
   showDeleteModal.value = true
 }
+
 const deleteRole = async () => {
+  if (!roleToDelete.value) return
   try {
     await axios.delete(`/api/roles/${roleToDelete.value.id}`)
     toast.success('Role deleted successfully')
@@ -232,9 +257,3 @@ onMounted(() => {
   loadPermissions()
 })
 </script>
-
-<style scoped>
-input[type='radio']:checked + label {
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
-}
-</style>

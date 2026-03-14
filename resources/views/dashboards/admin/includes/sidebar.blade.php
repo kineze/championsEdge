@@ -7,23 +7,23 @@
         <a href="{{ route('setDashboard') }}" class="relative flex items-center">
           <!-- Expanded: Light Logo -->
           <img
-            src="/assets/img/ceylon-bloom-icon.webp"
+            src="/assets/img/logo-light-mode.webp"
             alt="Nextep"
             class="sidebar-logo sidebar-logo-full block h-12 w-auto dark:hidden transition-opacity duration-200"
             loading="lazy"
           />
           <!-- Expanded: Dark Logo -->
           <img
-            src="/assets/img/ceylon-bloom-icon.webp"
+            src="/assets/img/Logo-dark-mode.webp"
             alt="Nextep"
             class="sidebar-logo sidebar-logo-full hidden dark:block h-12 w-auto transition-opacity duration-200"
             loading="lazy"
           />
           <!-- Mini: Icon -->
           <img
-            src="/assets/img/ceylon-bloom-icon.webp"
+            src="/assets/img/icon.webp"
             alt="Nextep Icon"
-            class="sidebar-logo sidebar-logo-icon hidden h-9 w-9 transition-opacity duration-200"
+            class="sidebar-logo sidebar-logo-icon hidden h-9 w-9 transition-opacity duration-200 dark:brightness-0 dark:invert"
             loading="lazy"
           />
         </a>
@@ -67,7 +67,7 @@
         @can('Manage Settings')
         <!-- Users -->
         <div class="relative sidebar-dropdown"
-            data-subtitle="Settings"
+            data-subtitle="Users"
             data-links='[
               {"label":"Roles & Permissions","href":"{{ url('/roles-and-permission') }}"},
               {"label":"System Users","href":"{{ url('system-users') }}"}
@@ -75,11 +75,11 @@
 
           <button class="dropdown-toggle  dark:border-stone-600 w-full flex items-center gap-3 p-2 dark:hover:bg-slate-800 transition-all">
             <div class="sidebar-icon-box">
-              <i class="fas fa-cog" aria-hidden="true"></i>
-              <span class="sr-only">Settings</span>
+              <i class="fas fa-users" aria-hidden="true"></i>
+              <span class="sr-only">Users</span>
             </div>
             <span class="sidebar-label flex-1 text-sm font-medium text-stone-700 dark:text-white text-left">
-              Settings
+              Users
             </span>
             <i class="fas fa-chevron-down text-xs text-stone-500 sidebar-label"></i>
           </button>
@@ -110,5 +110,3 @@
   </div>
   <div id="subSidebarLinks" class="py-2 max-h-[calc(100vh-60px)] overflow-y-auto"></div>
 </div>
-
-

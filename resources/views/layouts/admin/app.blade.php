@@ -5,7 +5,7 @@
 
 @livewireStyles
 
-<body class="m-0 font-sans antialiased font-normal text-left  dark:bg-slate-950  text-slate-500 dark:text-white">
+<body class="m-0 font-sans antialiased font-normal text-left bg-slate-100 text-slate-700 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-200">
 
     @auth
         <script>
@@ -21,13 +21,15 @@
         @include('dashboards.marketer.includes.sidebar')
     @endrole
        
-    <main  id="mainContent" class="relative h-full   duration-200 ease-soft-in-out z-50 rounded-xl">
+    <main id="mainContent" class="relative z-50 min-h-screen rounded-xl bg-gradient-to-b from-slate-100 via-white to-slate-100 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 duration-200 ease-soft-in-out transition-colors">
 
         <div id="app">
-        @include('dashboards.admin.includes.nav')
+            @include('dashboards.admin.includes.nav')
 
-            @yield('content')
-      </div>
+            <section class="px-2 pb-6 sm:px-3">
+                @yield('content')
+            </section>
+        </div>
 
     </main>
     

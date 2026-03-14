@@ -1,11 +1,23 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="color-scheme" content="light dark" />
     <link rel="apple-touch-icon" sizes="76x76" href="{{asset('assets/img/ceylon-bloom-icon.webp')}}" />
     <link rel="icon" type="image/png" href="{{ asset('assets/img/ceylon-bloom-icon.webp') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
      <title>Ceylon Bloom - All natural</title>
+
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme');
+          var preferDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var useDark = stored ? stored === 'dark' : preferDark;
+          document.documentElement.classList.toggle('dark', useDark);
+        } catch (e) {}
+      })();
+    </script>
 
     <link href="{{asset('/assets/css/theme.css')}}" rel="stylesheet" />
     
