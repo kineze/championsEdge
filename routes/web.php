@@ -47,4 +47,10 @@ Route::middleware(['permission:Manage Settings', config('jetstream.auth_session'
         Route::get('/admin/facilities/{facility}', 'show')->name('facilityShow');
     });
 
+    Route::view('/admin/general-configurations', 'dashboards.admin.settings.generalConfigurations')
+        ->name('generalConfigurations');
+
+    Route::view('/admin/subscriptions', 'dashboards.admin.settings.subscriptions')
+        ->name('subscriptionsPage');
+
 });

@@ -3,7 +3,11 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\AgeGroupController;
 use App\Http\Controllers\FacilityController;
+use App\Http\Controllers\ReservationPriceController;
+use App\Http\Controllers\SubscriptionPricingController;
 use App\Http\Controllers\RolePermissionController;
 
 Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
@@ -29,6 +33,7 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
 
 Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
     Route::get('/facilities', [FacilityController::class, 'index']);
+    Route::get('/facilities/{facility}', [FacilityController::class, 'apiShow']);
     Route::post('/facilities', [FacilityController::class, 'store']);
     Route::put('/facilities/{facility}', [FacilityController::class, 'update']);
     Route::delete('/facilities/{facility}', [FacilityController::class, 'destroy']);
@@ -36,6 +41,28 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
     Route::post('/facilities/{facility}/images', [FacilityController::class, 'uploadImages']);
     Route::delete('/facilities/{facility}/images/{image}', [FacilityController::class, 'deleteImage']);
     Route::post('/facilities/{facility}/images/primary', [FacilityController::class, 'setPrimaryImage']);
+    Route::get('/facilities/{facility}/subscription-pricings', [SubscriptionPricingController::class, 'index']);
+    Route::get('/facilities/{facility}/subscription-pricings/{subscriptionPricing}', [SubscriptionPricingController::class, 'show']);
+    Route::post('/facilities/{facility}/subscription-pricings', [SubscriptionPricingController::class, 'store']);
+    Route::put('/facilities/{facility}/subscription-pricings/{subscriptionPricing}', [SubscriptionPricingController::class, 'update']);
+    Route::get('/facilities/{facility}/reservation-prices', [ReservationPriceController::class, 'index']);
+    Route::get('/facilities/{facility}/reservation-prices/{reservationPrice}', [ReservationPriceController::class, 'show']);
+    Route::post('/facilities/{facility}/reservation-prices', [ReservationPriceController::class, 'store']);
+    Route::put('/facilities/{facility}/reservation-prices/{reservationPrice}', [ReservationPriceController::class, 'update']);
+});
+
+Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
+    Route::get('/age-groups', [AgeGroupController::class, 'index']);
+    Route::post('/age-groups', [AgeGroupController::class, 'store']);
+    Route::put('/age-groups/{ageGroup}', [AgeGroupController::class, 'update']);
+    Route::delete('/age-groups/{ageGroup}', [AgeGroupController::class, 'destroy']);
+});
+
+Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
+    Route::get('/subscriptions', [SubscriptionController::class, 'index']);
+    Route::get('/subscriptions/meta', [SubscriptionController::class, 'meta']);
+    Route::post('/subscriptions', [SubscriptionController::class, 'store']);
+    Route::patch('/subscriptions/{subscription}/toggle-blocked', [SubscriptionController::class, 'toggleBlocked']);
 });
 
 Route::get('/public/facilities', [FacilityController::class, 'publicIndex']);

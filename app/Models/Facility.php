@@ -23,4 +23,19 @@ class Facility extends Model
     {
         return $this->belongsTo(FacilityImage::class, 'primary_image_id');
     }
+
+    public function subscriptionPricings()
+    {
+        return $this->hasMany(SubscriptionPricing::class);
+    }
+
+    public function reservationPrices()
+    {
+        return $this->hasMany(ReservationPrice::class);
+    }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class);
+    }
 }

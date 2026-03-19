@@ -59,6 +59,33 @@
         </div>
         @endcan
 
+        @can('Manage Settings')
+        <!-- Subscription Manager -->
+        <div class="relative sidebar-dropdown"
+            data-subtitle="Subscription Manager"
+            data-links='[
+              {"label":"Subscriptions","href":"{{ route('subscriptionsPage') }}"}
+            ]'>
+
+          <button class="dropdown-toggle dark:border-sky-600 w-full flex items-center gap-3 p-2 dark:hover:bg-slate-800 transition-all">
+            <div class="sidebar-icon-box">
+              <i class="fas fa-id-card" aria-hidden="true"></i>
+              <span class="sr-only">Subscription Manager</span>
+            </div>
+            <span class="sidebar-label flex-1 text-sm font-medium text-sky-700 dark:text-white text-left">
+              Subscription Manager
+            </span>
+            <i class="fas fa-chevron-down text-xs text-sky-500 sidebar-label"></i>
+          </button>
+
+          <div class="expanded-only hidden py-1 ml-4 space-y-1">
+            <a href="{{ route('subscriptionsPage') }}" class="block px-4 py-2 text-xs font-semibold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-slate-700 rounded-md">
+              Subscriptions
+            </a>
+          </div>
+        </div>
+        @endcan
+
         @can('Manage Inventory')
         <!-- Call Center -->
         <div class="relative sidebar-dropdown"
@@ -121,6 +148,33 @@
           </div>
         </div>
 
+        @endcan
+
+        @can('Manage Settings')
+        <!-- Settings -->
+        <div class="relative sidebar-dropdown"
+            data-subtitle="Settings"
+            data-links='[
+              {"label":"General Configurations","href":"{{ route('generalConfigurations') }}"}
+            ]'>
+
+          <button class="dropdown-toggle dark:border-indigo-600 w-full flex items-center gap-3 p-2 dark:hover:bg-slate-800 transition-all">
+            <div class="sidebar-icon-box">
+              <i class="fas fa-gear" aria-hidden="true"></i>
+              <span class="sr-only">Settings</span>
+            </div>
+            <span class="sidebar-label flex-1 text-sm font-medium text-indigo-700 dark:text-white text-left">
+              Settings
+            </span>
+            <i class="fas fa-chevron-down text-xs text-indigo-500 sidebar-label"></i>
+          </button>
+
+          <div class="expanded-only hidden py-1 ml-4 space-y-1">
+            <a href="{{ route('generalConfigurations') }}" class="block px-4 py-2 text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-slate-700 rounded-md">
+              General Configurations
+            </a>
+          </div>
+        </div>
         @endcan
 
       </nav>

@@ -43,6 +43,18 @@ class FacilityController extends Controller
         ]);
     }
 
+    public function apiShow(Facility $facility)
+    {
+        $facility->load([
+            'primaryImage',
+            'images' => fn ($q) => $q->orderBy('sort_order'),
+        ]);
+
+        return response()->json([
+            'facility' => $facility,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

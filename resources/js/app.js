@@ -9,6 +9,11 @@ import DarkModeToggle from './components/DarkModeToggle.vue';
 import RolePermissionManager from './components/RolePermissionManager.vue';
 import UserManager from './components/UserManager.vue';
 import FacilityManager from './components/FacilityManager.vue';
+import AdminFacilityDetail from './components/AdminFacilityDetail.vue';
+import AgeGroupManager from './components/AgeGroupManager.vue';
+import FacilitySubscriptionPricingManager from './components/FacilitySubscriptionPricingManager.vue';
+import FacilityReservationPricingManager from './components/FacilityReservationPricingManager.vue';
+import SubscriptionManager from './components/SubscriptionManager.vue';
 import HomePage from './site/Home.vue';
 import AboutPage from './site/About.vue';
 import FacilitiesPage from './site/Facilities.vue';
@@ -24,6 +29,11 @@ const app = createApp({})
 .component('roles-and-permission-manager', RolePermissionManager)
 .component('user-manager', UserManager)
 .component('facility-manager', FacilityManager)
+.component('admin-facility-detail', AdminFacilityDetail)
+.component('age-group-manager', AgeGroupManager)
+.component('facility-subscription-pricing-manager', FacilitySubscriptionPricingManager)
+.component('facility-reservation-pricing-manager', FacilityReservationPricingManager)
+.component('subscription-manager', SubscriptionManager)
 .component('home-page', HomePage)
 .component('about-page', AboutPage)
 .component('facilities-page', FacilitiesPage)
