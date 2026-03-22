@@ -20,6 +20,11 @@
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^7.1.0",
+        "@fullcalendar/core": "^6.1.20",
+        "@fullcalendar/daygrid": "^6.1.20",
+        "@fullcalendar/interaction": "^6.1.20",
+        "@fullcalendar/timegrid": "^6.1.20",
+        "@fullcalendar/vue3": "^6.1.20",
         "@vitejs/plugin-vue": "^6.0.2",
         "vue": "^3.5.25",
         "vue-toastification": "^2.0.0-rc.5"

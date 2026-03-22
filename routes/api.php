@@ -6,9 +6,11 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\AgeGroupController;
 use App\Http\Controllers\FacilityController;
+use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\ReservationPriceController;
 use App\Http\Controllers\SubscriptionPricingController;
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\WorkingHourController;
 
 Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
 
@@ -56,6 +58,9 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
     Route::post('/age-groups', [AgeGroupController::class, 'store']);
     Route::put('/age-groups/{ageGroup}', [AgeGroupController::class, 'update']);
     Route::delete('/age-groups/{ageGroup}', [AgeGroupController::class, 'destroy']);
+
+    Route::get('/working-hours', [WorkingHourController::class, 'index']);
+    Route::put('/working-hours/bulk', [WorkingHourController::class, 'bulkUpsert']);
 });
 
 Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
@@ -65,5 +70,14 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
     Route::patch('/subscriptions/{subscription}/toggle-blocked', [SubscriptionController::class, 'toggleBlocked']);
 });
 
+Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
+    Route::get('/reservations', [ReservationController::class, 'index']);
+    Route::patch('/reservations/{reservation}/status', [ReservationController::class, 'updateStatus']);
+});
+
 Route::get('/public/facilities', [FacilityController::class, 'publicIndex']);
 Route::get('/public/facilities/{facility}', [FacilityController::class, 'publicShow']);
+Route::get('/public/reservations/meta', [ReservationController::class, 'publicMeta']);
+Route::get('/public/reservations/calendar-events', [ReservationController::class, 'publicCalendarEvents']);
+Route::post('/public/reservations/availability', [ReservationController::class, 'checkAvailability']);
+Route::post('/public/reservations', [ReservationController::class, 'publicStore']);

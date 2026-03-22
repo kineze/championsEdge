@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('reservation_prices', function (Blueprint $table) {
             $table->id();
             $table->foreignId('facility_id')->constrained()->cascadeOnDelete();
-            $table->enum('range_type', ['per_hour', 'per_day']);
+            $table->enum('range_type', ['per_hour']);
             $table->decimal('price', 10, 2);
             $table->boolean('is_deposit_required')->default(false);
             $table->decimal('deposit_amount', 10, 2)->nullable();

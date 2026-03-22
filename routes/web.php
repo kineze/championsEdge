@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\GenaralController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ReservationController;
 
 Route::controller(GenaralController::class)->group(function () {
     Route::get('/', 'index')->name('index');
@@ -21,6 +22,10 @@ Route::controller(GenaralController::class)->group(function () {
     Route::get('/dashboard', 'setDashboard')->name('dashboard');
     Route::get('/blocked', 'blocked')->name('blocked');
     Route::get('/privacy-policy', 'privacyPolicy')->name('privacyPolicy');
+});
+
+Route::controller(ReservationController::class)->group(function () {
+    Route::get('/reservations', 'publicPage')->name('publicReservationsPage');
 });
 
 Route::prefix('admin')->middleware(['auth:sanctum', 'permission:Access Admin Dashboard', config('jetstream.auth_session'), 'verified',])->group(function () {
@@ -52,5 +57,9 @@ Route::middleware(['permission:Manage Settings', config('jetstream.auth_session'
 
     Route::view('/admin/subscriptions', 'dashboards.admin.settings.subscriptions')
         ->name('subscriptionsPage');
+
+    Route::controller(ReservationController::class)->group(function () {
+        Route::get('/admin/reservations', 'reservationManagement')->name('reservationManagement');
+    });
 
 });

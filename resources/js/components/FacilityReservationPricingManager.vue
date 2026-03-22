@@ -86,10 +86,12 @@
           <form class="mt-4 grid gap-4" @submit.prevent="savePlan">
             <div>
               <label class="mb-1.5 inline-block text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-slate-400">Range Type</label>
-              <select v-model="form.range_type" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-cyan-200 transition focus:ring-2 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200">
-                <option value="per_hour">Per Hour</option>
-                <option value="per_day">Per Day</option>
-              </select>
+              <input
+                type="text"
+                value="Per Hour"
+                disabled
+                class="w-full rounded-xl border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700 outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+              />
             </div>
 
             <div>
@@ -239,7 +241,7 @@ const openViewModal = async (plan) => {
 
 const savePlan = async () => {
   const payload = {
-    range_type: form.value.range_type,
+    range_type: 'per_hour',
     price: Number(form.value.price),
     is_deposit_required: Boolean(form.value.is_deposit_required),
     deposit_amount: form.value.is_deposit_required ? Number(form.value.deposit_amount) : null,
@@ -266,7 +268,7 @@ const savePlan = async () => {
 }
 
 const prettifyRangeType = (type) => {
-  return type === 'per_day' ? 'Per Day' : 'Per Hour'
+  return type === 'per_hour' ? 'Per Hour' : type
 }
 
 const formatPrice = (value) => {

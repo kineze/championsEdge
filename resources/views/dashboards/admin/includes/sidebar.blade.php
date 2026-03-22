@@ -60,6 +60,33 @@
         @endcan
 
         @can('Manage Settings')
+        <!-- Reservation Manager -->
+        <div class="relative sidebar-dropdown"
+            data-subtitle="Reservation Manager"
+            data-links='[
+              {"label":"Reservation Manager","href":"{{ route('reservationManagement') }}"}
+            ]'>
+
+          <button class="dropdown-toggle dark:border-emerald-600 w-full flex items-center gap-3 p-2 dark:hover:bg-slate-800 transition-all">
+            <div class="sidebar-icon-box">
+              <i class="fas fa-calendar-check" aria-hidden="true"></i>
+              <span class="sr-only">Reservation Manager</span>
+            </div>
+            <span class="sidebar-label flex-1 text-sm font-medium text-emerald-700 dark:text-white text-left">
+              Reservation Manager
+            </span>
+            <i class="fas fa-chevron-down text-xs text-emerald-500 sidebar-label"></i>
+          </button>
+
+          <div class="expanded-only hidden py-1 ml-4 space-y-1">
+            <a href="{{ route('reservationManagement') }}" class="block px-4 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-slate-700 rounded-md">
+              Reservation Manager
+            </a>
+          </div>
+        </div>
+        @endcan
+
+        @can('Manage Settings')
         <!-- Subscription Manager -->
         <div class="relative sidebar-dropdown"
             data-subtitle="Subscription Manager"

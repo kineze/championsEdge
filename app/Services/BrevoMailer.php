@@ -67,4 +67,26 @@ class BrevoMailer
         ])->successful();
     }
 
+    public function sendReservationReceivedEmail(string $toEmail, string $toName, array $reservationDetails): bool
+    {
+        return Http::withHeaders([
+            'api-key' => $this->apiKey,
+            'accept' => 'application/json',
+            'content-type' => 'application/json',
+        ])->post('https://api.brevo.com/v3/smtp/email', [
+            'sender' => [
+                'name' => 'Software Engineering',
+                'email' => 'helliumgk@gmail.com',
+            ],
+            'to' => [
+                ['email' => $toEmail, 'name' => $toName],
+            ],
+            'subject' => 'Reservation Request Received',
+            'htmlContent' => view('emails.reservation-request-received', [
+                'name' => $toName,
+                'details' => $reservationDetails,
+            ])->render(),
+        ])->successful();
+    }
+
 }

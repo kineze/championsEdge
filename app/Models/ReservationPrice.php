@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ReservationPrice extends Model
 {
+    public const RANGE_TYPE_PER_HOUR = 'per_hour';
+
     protected $fillable = [
         'facility_id',
         'range_type',
@@ -24,5 +27,10 @@ class ReservationPrice extends Model
     public function facility(): BelongsTo
     {
         return $this->belongsTo(Facility::class);
+    }
+
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(Reservation::class, 'price_plan_id');
     }
 }

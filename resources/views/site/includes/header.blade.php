@@ -38,6 +38,7 @@
             </div>
 
             <a href="/about-us" class="hover:text-gray-200 transition">About Us</a>
+            <a href="/reservations" class="hover:text-gray-200 transition">Reservations</a>
             <a href="/login" class="px-4 py-2 bg-cyan-600 hover:bg-gray-700 rounded-lg font-medium transition shadow">Login</a>
         </div>
     </div>

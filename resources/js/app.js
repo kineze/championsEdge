@@ -11,9 +11,11 @@ import UserManager from './components/UserManager.vue';
 import FacilityManager from './components/FacilityManager.vue';
 import AdminFacilityDetail from './components/AdminFacilityDetail.vue';
 import AgeGroupManager from './components/AgeGroupManager.vue';
+import WorkingHoursManager from './components/WorkingHoursManager.vue';
 import FacilitySubscriptionPricingManager from './components/FacilitySubscriptionPricingManager.vue';
 import FacilityReservationPricingManager from './components/FacilityReservationPricingManager.vue';
 import SubscriptionManager from './components/SubscriptionManager.vue';
+import ReservationManager from './components/ReservationManager.vue';
 import HomePage from './site/Home.vue';
 import AboutPage from './site/About.vue';
 import FacilitiesPage from './site/Facilities.vue';
@@ -22,6 +24,8 @@ import FacilityIndoorStadium from './site/facilities/IndoorStadium.vue';
 import FacilitySwimmingPool from './site/facilities/SwimmingPool.vue';
 import FacilityGym from './site/facilities/Gym.vue';
 import FacilityDetail from './site/FacilityDetail.vue';
+import ReservationRequestPage from './site/ReservationRequest.vue';
+import BookingCalendar from './site/BookingCalendar.vue';
 
 const app = createApp({})
 
@@ -31,9 +35,11 @@ const app = createApp({})
 .component('facility-manager', FacilityManager)
 .component('admin-facility-detail', AdminFacilityDetail)
 .component('age-group-manager', AgeGroupManager)
+.component('working-hours-manager', WorkingHoursManager)
 .component('facility-subscription-pricing-manager', FacilitySubscriptionPricingManager)
 .component('facility-reservation-pricing-manager', FacilityReservationPricingManager)
 .component('subscription-manager', SubscriptionManager)
+.component('reservation-manager', ReservationManager)
 .component('home-page', HomePage)
 .component('about-page', AboutPage)
 .component('facilities-page', FacilitiesPage)
@@ -42,5 +48,7 @@ const app = createApp({})
 .component('facility-swimming-pool', FacilitySwimmingPool)
 .component('facility-gym', FacilityGym)
 .component('facility-detail', FacilityDetail)
+.component('reservation-request-page', ReservationRequestPage)
+.component('booking-calendar', BookingCalendar)
 
 .mount('#app')

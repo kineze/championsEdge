@@ -32,7 +32,7 @@ class ReservationPriceController extends Controller
         $validated = $request->validate([
             'range_type' => [
                 'required',
-                Rule::in(['per_hour', 'per_day']),
+                Rule::in([ReservationPrice::RANGE_TYPE_PER_HOUR]),
                 Rule::unique('reservation_prices')->where(fn ($q) => $q->where('facility_id', $facility->id)),
             ],
             'price' => 'required|numeric|min:0',
@@ -62,7 +62,7 @@ class ReservationPriceController extends Controller
         $validated = $request->validate([
             'range_type' => [
                 'required',
-                Rule::in(['per_hour', 'per_day']),
+                Rule::in([ReservationPrice::RANGE_TYPE_PER_HOUR]),
                 Rule::unique('reservation_prices')
                     ->ignore($reservationPrice->id)
                     ->where(fn ($q) => $q->where('facility_id', $facility->id)),

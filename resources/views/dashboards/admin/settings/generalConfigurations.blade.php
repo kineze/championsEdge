@@ -11,7 +11,8 @@
                 <age-group-manager></age-group-manager>
             </div>
 
-            <div class="rounded-2xl border border-dashed border-slate-300/80 bg-white/50 p-4 dark:border-slate-600 dark:bg-slate-900/40">
+            <div>
+                <working-hours-manager></working-hours-manager>
             </div>
         </div>
     </div>
