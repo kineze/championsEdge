@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MemberSubscriptionPayment;
 use App\Models\Subscription;
+use App\Models\TrainingSessionPayment;
 use App\Services\SeylanGateway;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -28,13 +29,55 @@ class MemberSubscriptionController extends Controller
             $activeSubscription = $subscriptions->first();
         }
 
+        $trainingSessionPurchases = TrainingSessionPayment::query()
+            ->with([
+                'trainingSession:id,session_title,trainer_id,facility_id,frequency,amount',
+                'trainingSession.trainer:id,name',
+                'trainingSession.facility:id,title',
+            ])
+            ->where('user_id', $user->id)
+            ->where('status', 'AUTHORIZED')
+            ->latest('paid_at')
+            ->latest()
+            ->get()
+            ->unique('training_session_id')
+            ->map(function ($payment) {
+                $purchasedAt = $payment->paid_at ?? $payment->created_at;
+                $frequency = strtolower((string) data_get($payment, 'trainingSession.frequency', 'monthly'));
+                $renewalDate = $purchasedAt
+                    ? ($frequency === 'yearly'
+                        ? $purchasedAt->copy()->addYear()->toDateString()
+                        : $purchasedAt->copy()->addMonth()->toDateString())
+                    : null;
+
+                return [
+                    'id' => $payment->id,
+                    'training_session_id' => $payment->training_session_id,
+                    'session_title' => data_get($payment, 'trainingSession.session_title'),
+                    'trainer_name' => data_get($payment, 'trainingSession.trainer.name'),
+                    'facility_title' => data_get($payment, 'trainingSession.facility.title'),
+                    'frequency' => $frequency ?: 'monthly',
+                    'amount' => $payment->amount,
+                    'currency' => $payment->currency,
+                    'status' => $payment->status,
+                    'payment_action' => $payment->payment_action ?? 'purchase',
+                    'transaction_id' => $payment->transaction_id,
+                    'order_gateway_id' => $payment->order_gateway_id,
+                    'purchased_at' => optional($purchasedAt)->toDateTimeString(),
+                    'renewal_date' => $renewalDate,
+                ];
+            })
+            ->values();
+
         return response()->json([
             'active_subscription' => $activeSubscription,
             'subscriptions' => $subscriptions,
+            'training_session_purchases' => $trainingSessionPurchases,
             'stats' => [
                 'total_subscriptions' => $subscriptions->count(),
                 'active_subscriptions' => $subscriptions->filter(fn ($sub) => !$sub->is_blocked && Carbon::parse($sub->subscription_end_date)->greaterThanOrEqualTo($today))->count(),
                 'cancelled_subscriptions' => $subscriptions->filter(fn ($sub) => $sub->is_blocked)->count(),
+                'total_training_sessions_purchased' => $trainingSessionPurchases->count(),
             ],
         ]);
     }

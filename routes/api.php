@@ -14,6 +14,8 @@ use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\ReservationPriceController;
 use App\Http\Controllers\SubscriptionPricingController;
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\TrainingSessionController;
+use App\Http\Controllers\TrainingSessionPurchaseController;
 use App\Http\Controllers\WorkingHourController;
 
 Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
@@ -55,6 +57,11 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
     Route::get('/facilities/{facility}/reservation-prices/{reservationPrice}', [ReservationPriceController::class, 'show']);
     Route::post('/facilities/{facility}/reservation-prices', [ReservationPriceController::class, 'store']);
     Route::put('/facilities/{facility}/reservation-prices/{reservationPrice}', [ReservationPriceController::class, 'update']);
+    Route::get('/facilities/{facility}/training-sessions', [TrainingSessionController::class, 'index']);
+    Route::get('/facilities/{facility}/training-sessions/{trainingSession}', [TrainingSessionController::class, 'show']);
+    Route::post('/facilities/{facility}/training-sessions', [TrainingSessionController::class, 'store']);
+    Route::put('/facilities/{facility}/training-sessions/{trainingSession}', [TrainingSessionController::class, 'update']);
+    Route::delete('/facilities/{facility}/training-sessions/{trainingSession}', [TrainingSessionController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
@@ -93,6 +100,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/member/subscription/{subscription}/renew', [MemberSubscriptionController::class, 'renew']);
     Route::post('/member/subscription/{subscription}/cancel', [MemberSubscriptionController::class, 'cancel']);
     Route::post('/member/subscription/{subscription}/reactivate-payment', [MemberSubscriptionController::class, 'initiateReactivationPayment']);
+    Route::get('/member/training-sessions/{trainingSession}/purchase-meta', [TrainingSessionPurchaseController::class, 'meta']);
+    Route::post('/member/training-sessions/{trainingSession}/initiate-payment', [TrainingSessionPurchaseController::class, 'initiatePayment']);
+    Route::post('/member/training-sessions/{trainingSession}/renew-payment', [TrainingSessionPurchaseController::class, 'initiateRenewalPayment']);
 });
 
 Route::get('/public/facilities', [FacilityController::class, 'publicIndex']);
@@ -103,3 +113,5 @@ Route::post('/public/reservations/availability', [ReservationController::class, 
 Route::post('/public/reservations', [ReservationController::class, 'publicStore']);
 Route::get('/public/member-registration/meta', [MemberRegistrationController::class, 'meta']);
 Route::post('/public/member-registration/initiate-payment', [MemberRegistrationController::class, 'initiatePayment']);
+Route::get('/public/training-sessions', [TrainingSessionController::class, 'publicIndex']);
+Route::get('/public/training-sessions/{trainingSession}', [TrainingSessionController::class, 'publicShow']);

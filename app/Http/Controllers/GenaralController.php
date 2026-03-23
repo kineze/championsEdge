@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Facility;
 use App\Models\Subscription;
+use App\Models\TrainingSession;
 use Carbon\Carbon;
 
 class GenaralController extends Controller
@@ -31,6 +32,16 @@ class GenaralController extends Controller
     public function facilityShowPublic(Facility $facility)
     {
         return view('site.facilities.show', compact('facility'));
+    }
+
+    public function trainingSessions()
+    {
+        return view('site.training-sessions');
+    }
+
+    public function trainingSessionShow(TrainingSession $trainingSession)
+    {
+        return view('site.training-sessions.show', compact('trainingSession'));
     }
 
     public function contact(){

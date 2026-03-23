@@ -75,6 +75,7 @@
             </div>
           </div>
 
+          <a href="/training-sessions" class="transition hover:text-gray-200">Training Sessions</a>
           <a href="/about-us" class="transition hover:text-gray-200">About Us</a>
           <a href="/booking" class="rounded-lg bg-cyan-600 px-4 py-2 font-medium text-white shadow transition hover:bg-cyan-700">Book Now</a>
         </div>
@@ -118,6 +119,7 @@
         <a href="/" class="block rounded-lg border border-white/10 px-3 py-2 transition hover:bg-white/10" @click="mobileOpen = false">Home</a>
         <a href="/about-us" class="block rounded-lg border border-white/10 px-3 py-2 transition hover:bg-white/10" @click="mobileOpen = false">About Us</a>
         <a href="/facilities" class="block rounded-lg border border-white/10 px-3 py-2 transition hover:bg-white/10" @click="mobileOpen = false">Facilities</a>
+        <a href="/training-sessions" class="block rounded-lg border border-white/10 px-3 py-2 transition hover:bg-white/10" @click="mobileOpen = false">Training Sessions</a>
         <a v-if="isAuthenticated" href="/member/dashboard" class="block rounded-lg border border-white/10 px-3 py-2 transition hover:bg-white/10" @click="mobileOpen = false">Member Dashboard</a>
 
         <button

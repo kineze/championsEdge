@@ -116,6 +116,44 @@
             </article>
           </div>
         </div>
+
+        <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/80">
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white">Purchased Training Sessions</h2>
+
+          <div v-if="purchasedSessions.length === 0" class="mt-4 rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+            No purchased training sessions yet.
+          </div>
+
+          <div v-else class="mt-4 space-y-2">
+            <article
+              v-for="item in purchasedSessions"
+              :key="item.id"
+              class="rounded-xl border border-slate-200 bg-white p-3 text-sm dark:border-slate-700 dark:bg-slate-950/60"
+            >
+              <p class="font-semibold text-slate-900 dark:text-white">{{ item.session_title || '-' }}</p>
+              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {{ item.facility_title || '-' }} · Trainer: {{ item.trainer_name || '-' }}
+              </p>
+              <div class="mt-2 grid gap-1 text-xs text-slate-600 dark:text-slate-300">
+                <p><span class="font-semibold">Purchased:</span> {{ formatDateTime(item.purchased_at) }}</p>
+                <p><span class="font-semibold">Renewal Date:</span> {{ formatDate(item.renewal_date) }}</p>
+                <p><span class="font-semibold">Frequency:</span> <span class="capitalize">{{ item.frequency || 'monthly' }}</span></p>
+                <p><span class="font-semibold">Amount:</span> {{ formatCurrency(item.amount) }}</p>
+                <p><span class="font-semibold">Transaction:</span> {{ item.transaction_id || '-' }}</p>
+              </div>
+              <div class="mt-3">
+                <button
+                  type="button"
+                  class="rounded-lg bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  :disabled="renewingSessionId === item.training_session_id"
+                  @click="renewTrainingSession(item)"
+                >
+                  {{ renewingSessionId === item.training_session_id ? 'Initializing...' : 'Renew Session' }}
+                </button>
+              </div>
+            </article>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -129,12 +167,15 @@ import { useToast } from 'vue-toastification'
 const toast = useToast()
 const loading = ref(false)
 const actionLoading = ref('')
+const renewingSessionId = ref(null)
 const active = ref(null)
 const history = ref([])
+const purchasedSessions = ref([])
 const stats = ref({
   total_subscriptions: 0,
   active_subscriptions: 0,
   cancelled_subscriptions: 0,
+  total_training_sessions_purchased: 0,
 })
 
 const remainingDays = computed(() => {
@@ -162,12 +203,20 @@ const formatDate = (value) => {
   return date.toLocaleDateString()
 }
 
+const formatDateTime = (value) => {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+  return date.toLocaleString()
+}
+
 const fetchSummary = async () => {
   loading.value = true
   try {
     const { data } = await axios.get('/api/member/subscription/summary')
     active.value = data.active_subscription || null
     history.value = Array.isArray(data.subscriptions) ? data.subscriptions : []
+    purchasedSessions.value = Array.isArray(data.training_session_purchases) ? data.training_session_purchases : []
     stats.value = data.stats || stats.value
   } catch (error) {
     toast.error(error?.response?.data?.message || 'Failed to load member dashboard.')
@@ -205,6 +254,25 @@ const cancel = async () => {
     toast.error(error?.response?.data?.message || 'Failed to cancel subscription.')
   } finally {
     actionLoading.value = ''
+  }
+}
+
+const renewTrainingSession = async (item) => {
+  if (!item?.training_session_id) return
+  if (!window.confirm(`Renew "${item.session_title}" now?`)) return
+
+  renewingSessionId.value = item.training_session_id
+  try {
+    const { data } = await axios.post(`/api/member/training-sessions/${item.training_session_id}/renew-payment`)
+    const checkoutUrl = data?.payment?.checkout_url
+    if (!checkoutUrl) {
+      throw new Error('Missing checkout URL')
+    }
+    window.location.href = checkoutUrl
+  } catch (error) {
+    toast.error(error?.response?.data?.message || 'Failed to initialize training session renewal.')
+  } finally {
+    renewingSessionId.value = null
   }
 }
 

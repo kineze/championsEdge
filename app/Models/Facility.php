@@ -43,4 +43,9 @@ class Facility extends Model
     {
         return $this->hasMany(Reservation::class);
     }
+
+    public function trainingSessions()
+    {
+        return $this->hasMany(TrainingSession::class);
+    }
 }

@@ -15,6 +15,7 @@ import WorkingHoursManager from './components/WorkingHoursManager.vue';
 import BankDetailsManager from './components/BankDetailsManager.vue';
 import FacilitySubscriptionPricingManager from './components/FacilitySubscriptionPricingManager.vue';
 import FacilityReservationPricingManager from './components/FacilityReservationPricingManager.vue';
+import FacilityTrainingSessionManager from './components/FacilityTrainingSessionManager.vue';
 import SubscriptionManager from './components/SubscriptionManager.vue';
 import ReservationManager from './components/ReservationManager.vue';
 import AdminBookingCalendar from './components/AdminBookingCalendar.vue';
@@ -32,8 +33,18 @@ import BookingCalendar from './site/BookingCalendar.vue';
 import MemberRegistrationPage from './site/MemberRegistration.vue';
 import MemberDashboardPage from './site/MemberDashboard.vue';
 import SiteNavigation from './site/SiteNavigation.vue';
+import TrainingSessionsPage from './site/TrainingSessions.vue';
+import TrainingSessionDetail from './site/TrainingSessionDetail.vue';
+import TrainingSessionPurchasePage from './site/TrainingSessionPurchase.vue';
 
 const app = createApp({})
+
+app.use(Toast, {
+  position: POSITION.TOP_RIGHT,
+  timeout: 3000,
+  closeOnClick: true,
+  pauseOnHover: true,
+})
 
 .component('dark-mode-toggle', DarkModeToggle)
 .component('roles-and-permission-manager', RolePermissionManager)
@@ -45,6 +56,7 @@ const app = createApp({})
 .component('bank-details-manager', BankDetailsManager)
 .component('facility-subscription-pricing-manager', FacilitySubscriptionPricingManager)
 .component('facility-reservation-pricing-manager', FacilityReservationPricingManager)
+.component('facility-training-session-manager', FacilityTrainingSessionManager)
 .component('subscription-manager', SubscriptionManager)
 .component('reservation-manager', ReservationManager)
 .component('admin-booking-calendar', AdminBookingCalendar)
@@ -62,5 +74,8 @@ const app = createApp({})
 .component('member-registration-page', MemberRegistrationPage)
 .component('member-dashboard-page', MemberDashboardPage)
 .component('site-navigation', SiteNavigation)
+.component('training-sessions-page', TrainingSessionsPage)
+.component('training-session-detail', TrainingSessionDetail)
+.component('training-session-purchase-page', TrainingSessionPurchasePage)
 
 .mount('#app')

@@ -11,6 +11,7 @@ use App\Http\Controllers\MemberRegistrationController;
 use App\Http\Controllers\MemberRegistrationPaymentController;
 use App\Http\Controllers\MemberSubscriptionPaymentController;
 use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\TrainingSessionPurchaseController;
 
 Route::controller(GenaralController::class)->group(function () {
     Route::get('/', 'index')->name('index');
@@ -20,6 +21,8 @@ Route::controller(GenaralController::class)->group(function () {
     Route::get('/contact', 'contact')->name('contact');
     Route::get('/facilities', 'facilities')->name('facilities');
     Route::get('/facilities/{facility}', 'facilityShowPublic')->name('facilityPublicShow');
+    Route::get('/training-sessions', 'trainingSessions')->name('trainingSessions');
+    Route::get('/training-sessions/{trainingSession}', 'trainingSessionShow')->name('trainingSessionShow');
     Route::get('/home', 'home')->name('home');
     Route::get('/redirect-dashboard', 'dashboardRedirect')->name('dashboardRedirect');
     Route::get('/setdashboard', 'setDashboard')->name('setDashboard');
@@ -52,6 +55,15 @@ Route::get('/member/subscriptions/payments/seylan/return', [MemberSubscriptionPa
     ->name('member.subscription.payment.seylan.return');
 Route::get('/member/subscriptions/payments/success/{memberSubscriptionPayment}', [MemberSubscriptionPaymentController::class, 'success'])
     ->name('member.subscription.payment.success');
+Route::get('/training-sessions/payments/seylan/checkout/{trainingSessionPayment}', [TrainingSessionPurchaseController::class, 'checkoutPage'])
+    ->middleware('auth:sanctum')
+    ->name('training.session.payment.seylan.checkout');
+Route::get('/training-sessions/payments/seylan/return', [TrainingSessionPurchaseController::class, 'return'])
+    ->name('training.session.payment.seylan.return');
+Route::get('/training-sessions/payments/success/{trainingSessionPayment}', [TrainingSessionPurchaseController::class, 'success'])
+    ->name('training.session.payment.success');
+Route::get('/training-sessions/{trainingSession}/purchase', [TrainingSessionPurchaseController::class, 'page'])
+    ->name('trainingSessionPurchasePage');
 
 Route::controller(ReservationController::class)->group(function () {
     Route::get('/booking', 'publicPage')->name('publicBookingPage');

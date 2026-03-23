@@ -108,6 +108,16 @@
               >
                 Reservation
               </button>
+              <button
+                type="button"
+                class="rounded-lg px-3 py-1.5 text-sm font-semibold transition"
+                :class="activeTab === 'training'
+                  ? 'bg-cyan-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'"
+                @click="activeTab = 'training'"
+              >
+                Training Sessions
+              </button>
             </div>
 
             <div class="pt-4">
@@ -117,6 +127,10 @@
               />
               <facility-reservation-pricing-manager
                 v-else-if="activeTab === 'reservation'"
+                :facility-id="props.facilityId"
+              />
+              <facility-training-session-manager
+                v-else-if="activeTab === 'training'"
                 :facility-id="props.facilityId"
               />
               <div

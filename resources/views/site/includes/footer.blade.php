@@ -21,6 +21,7 @@
                     <li><a href="/" class="transition hover:text-cyan-300">Home</a></li>
                     <li><a href="/about-us" class="transition hover:text-cyan-300">About Us</a></li>
                     <li><a href="/facilities" class="transition hover:text-cyan-300">Facilities</a></li>
+                    <li><a href="/training-sessions" class="transition hover:text-cyan-300">Training Sessions</a></li>
                     <li><a href="/booking" class="transition hover:text-cyan-300">Book Now</a></li>
                     <li><a href="/member/register" class="transition hover:text-cyan-300">Member Registration</a></li>
                 </ul>

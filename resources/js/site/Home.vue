@@ -16,6 +16,9 @@ let interval = null
 
 const facilities = ref([])
 const facilitiesLoading = ref(false)
+const sessions = ref([])
+const sessionsLoading = ref(false)
+const sessionSlideIndex = ref(0)
 
 const fetchFacilities = async () => {
   try {
@@ -29,10 +32,57 @@ const fetchFacilities = async () => {
   }
 }
 
+const fetchTrainingSessions = async () => {
+  try {
+    sessionsLoading.value = true
+    const res = await axios.get('/api/public/training-sessions')
+    sessions.value = Array.isArray(res.data.training_sessions) ? res.data.training_sessions : []
+  } catch {
+    sessions.value = []
+  } finally {
+    sessionsLoading.value = false
+  }
+}
+
 const featuredFacilities = computed(() => facilities.value.slice(0, 4))
+const sessionSlides = computed(() => {
+  const slides = []
+  for (let i = 0; i < sessions.value.length; i += 4) {
+    slides.push(sessions.value.slice(i, i + 4))
+  }
+  return slides
+})
+
+const nextSessionSlide = () => {
+  if (!sessionSlides.value.length) return
+  sessionSlideIndex.value = (sessionSlideIndex.value + 1) % sessionSlides.value.length
+}
+
+const prevSessionSlide = () => {
+  if (!sessionSlides.value.length) return
+  sessionSlideIndex.value = (sessionSlideIndex.value - 1 + sessionSlides.value.length) % sessionSlides.value.length
+}
 
 const goToSlide = (index) => {
   current.value = index
+}
+
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('en-LK', {
+    style: 'currency',
+    currency: 'LKR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(value || 0))
+}
+
+const sessionImage = (value) => {
+  if (!value) return '/images/slide1.jpg'
+  if (value.display_image_url) return value.display_image_url
+  const path = value.display_image
+  if (!path) return '/images/slide1.jpg'
+  if (String(path).startsWith('http')) return path
+  return `/storage/${path}`
 }
 
 onMounted(() => {
@@ -40,6 +90,7 @@ onMounted(() => {
     current.value = (current.value + 1) % images.length
   }, 4000)
   fetchFacilities()
+  fetchTrainingSessions()
 })
 
 onUnmounted(() => {
@@ -200,6 +251,81 @@ onUnmounted(() => {
           sustainable sports culture that inspires future generations.
         </p>
       </div>
+    </div>
+  </section>
+
+  <!-- TRAINING SESSIONS SECTION -->
+  <section class="bg-white py-24">
+    <div class="mx-auto max-w-7xl px-6">
+      <div class="mb-8 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 class="text-4xl font-bold text-slate-900">Training Sessions</h2>
+          <p class="mt-1 text-sm text-slate-500">Explore monthly programs by our trainers.</p>
+        </div>
+        <a href="/training-sessions" class="inline-flex rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-100">
+          View All Sessions
+        </a>
+      </div>
+
+      <div v-if="sessionsLoading" class="text-sm text-slate-500">Loading training sessions...</div>
+
+      <template v-else>
+        <div v-if="sessionSlides.length" class="space-y-6">
+          <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            <a
+              v-for="session in sessionSlides[sessionSlideIndex]"
+              :key="session.id"
+              :href="`/training-sessions/${session.id}`"
+              class="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            >
+              <img
+                :src="sessionImage(session)"
+                :alt="session.session_title"
+                class="h-52 w-full object-cover"
+              />
+              <div class="p-4">
+                <h3 class="text-base font-bold text-slate-900">{{ session.session_title }}</h3>
+                <p class="mt-2 text-sm text-slate-600">{{ session.trainer?.name || '-' }}</p>
+                <p class="text-xs text-slate-500">{{ session.facility?.title || '-' }}</p>
+                <div class="mt-4 flex items-center justify-between">
+                  <span class="text-sm font-bold text-cyan-700">{{ formatCurrency(session.amount) }}</span>
+                  <span class="text-xs font-semibold uppercase tracking-[0.08em] text-cyan-700">Details</span>
+                </div>
+              </div>
+            </a>
+          </div>
+
+          <div class="flex items-center justify-center gap-2">
+            <button
+              type="button"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 text-slate-600 transition hover:bg-slate-100"
+              @click="prevSessionSlide"
+              aria-label="Previous sessions"
+            >
+              <i class="fas fa-chevron-left text-xs"></i>
+            </button>
+            <button
+              v-for="(_, index) in sessionSlides"
+              :key="`session_slide_${index}`"
+              type="button"
+              class="h-2.5 w-2.5 rounded-full transition"
+              :class="sessionSlideIndex === index ? 'bg-cyan-600' : 'bg-slate-300 hover:bg-slate-400'"
+              @click="sessionSlideIndex = index"
+              :aria-label="`Go to session slide ${index + 1}`"
+            ></button>
+            <button
+              type="button"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 text-slate-600 transition hover:bg-slate-100"
+              @click="nextSessionSlide"
+              aria-label="Next sessions"
+            >
+              <i class="fas fa-chevron-right text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+        <div v-else class="text-sm text-slate-500">No training sessions available yet.</div>
+      </template>
     </div>
   </section>
 </template>
