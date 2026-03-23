@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BankDetail;
 use App\Models\Facility;
 use App\Models\Reservation;
+use App\Models\ReservationPayment;
 use App\Models\ReservationPrice;
 use App\Models\WorkingHour;
 use App\Services\BrevoMailer;
@@ -24,6 +26,11 @@ class ReservationController extends Controller
     public function reservationManagement()
     {
         return view('dashboards.admin.settings.reservations');
+    }
+
+    public function approvedReservationManagement()
+    {
+        return view('dashboards.admin.settings.approved-reservations');
     }
 
     public function publicPage()
@@ -70,7 +77,7 @@ class ReservationController extends Controller
 
         $query = Reservation::query()
             ->with('facility:id,title')
-            ->whereIn('status', ['draft', 'reserved', 'active']);
+            ->whereIn('status', ['reserved', 'active']);
 
         if (!empty($validated['facility_id'])) {
             $query->where('facility_id', (int) $validated['facility_id']);
@@ -106,6 +113,52 @@ class ReservationController extends Controller
                     'extendedProps' => [
                         'status' => $reservation->status,
                         'facility' => $reservation->facility?->title,
+                    ],
+                ];
+            })
+            ->filter()
+            ->values();
+
+        return response()->json([
+            'events' => $events,
+        ]);
+    }
+
+    public function adminCalendarEvents()
+    {
+        $events = Reservation::query()
+            ->with('facility:id,title')
+            ->get(['id', 'facility_id', 'name', 'day_range', 'status'])
+            ->map(function (Reservation $reservation) {
+                $start = data_get($reservation->day_range, 'start_at');
+                $end = data_get($reservation->day_range, 'end_at');
+
+                if (!$start || !$end) {
+                    return null;
+                }
+
+                [$backgroundColor, $borderColor] = match ($reservation->status) {
+                    'active' => ['#059669', '#047857'],
+                    'reserved' => ['#0284c7', '#0369a1'],
+                    'rejected' => ['#dc2626', '#b91c1c'],
+                    default => ['#f59e0b', '#d97706'],
+                };
+
+                $customerName = trim((string) $reservation->name) !== '' ? $reservation->name : 'Customer';
+                $facilityTitle = $reservation->facility?->title ?? 'Facility';
+
+                return [
+                    'id' => (string) $reservation->id,
+                    'title' => "{$customerName} - {$facilityTitle}",
+                    'start' => Carbon::parse($start)->toIso8601String(),
+                    'end' => Carbon::parse($end)->toIso8601String(),
+                    'allDay' => false,
+                    'backgroundColor' => $backgroundColor,
+                    'borderColor' => $borderColor,
+                    'extendedProps' => [
+                        'status' => $reservation->status,
+                        'facility' => $facilityTitle,
+                        'customer_name' => $customerName,
                     ],
                 ];
             })
@@ -524,7 +577,12 @@ class ReservationController extends Controller
     {
         $status = $request->string('status')->toString();
 
-        $query = Reservation::with(['facility:id,title', 'pricePlan:id,range_type,price,facility_id', 'user:id,name,email'])
+        $query = Reservation::with([
+            'facility:id,title',
+            'pricePlan:id,range_type,price,facility_id',
+            'user:id,name,email',
+            'payments:id,reservation_id,payment_date,payment_method,amount,currency,reference_no,recorded_by,created_at',
+        ])
             ->latest();
 
         if ($status !== '') {
@@ -542,13 +600,192 @@ class ReservationController extends Controller
             'status' => ['required', Rule::in(['reserved', 'rejected'])],
         ]);
 
+        $previousStatus = (string) $reservation->status;
         $reservation->update([
             'status' => $validated['status'],
         ]);
+        $reservation->refreshPaymentStatus();
+
+        if ($validated['status'] === 'reserved' && $previousStatus !== 'reserved') {
+            $this->sendReservationConfirmedEmail($reservation);
+        }
 
         return response()->json([
             'message' => 'Reservation status updated successfully.',
-            'reservation' => $reservation->fresh(['facility:id,title', 'pricePlan:id,range_type,price,facility_id', 'user:id,name,email']),
+            'reservation' => $reservation->fresh([
+                'facility:id,title',
+                'pricePlan:id,range_type,price,facility_id',
+                'user:id,name,email',
+                'payments:id,reservation_id,payment_date,payment_method,amount,currency,reference_no,recorded_by,created_at',
+            ]),
         ]);
+    }
+
+    private function sendReservationConfirmedEmail(Reservation $reservation): void
+    {
+        $reservation->loadMissing('facility:id,title', 'pricePlan:id,range_type', 'user:id,name,email');
+
+        $recipientEmail = $reservation->email ?: $reservation->user?->email;
+        if (!$recipientEmail) {
+            return;
+        }
+
+        $recipientName = trim((string) $reservation->name) !== '' ? $reservation->name : ($reservation->user?->name ?? 'Customer');
+        $total = round(abs((float) ($reservation->reservation_amount ?? 0)), 2);
+        $paid = round((float) ($reservation->paid_amount ?? 0), 2);
+        $remaining = round(max(0, $total - $paid), 2);
+
+        $bankDetails = BankDetail::query()
+            ->where('is_active', true)
+            ->orderBy('id')
+            ->get(['bank', 'account_number', 'account_holder_name', 'branch'])
+            ->map(fn ($item) => [
+                'bank' => $item->bank,
+                'account_number' => $item->account_number,
+                'account_holder_name' => $item->account_holder_name,
+                'branch' => $item->branch,
+            ])
+            ->values()
+            ->all();
+
+        try {
+            $this->mailer->sendReservationConfirmedEmail($recipientEmail, $recipientName, [
+                'reservation_id' => $reservation->id,
+                'facility' => $reservation->facility?->title ?? 'N/A',
+                'plan' => $reservation->pricePlan?->range_type ?? 'N/A',
+                'start_at' => data_get($reservation->day_range, 'start_at'),
+                'end_at' => data_get($reservation->day_range, 'end_at'),
+                'reservation_amount' => number_format($total, 2),
+                'paid_amount' => number_format($paid, 2),
+                'remaining_balance' => number_format($remaining, 2),
+                'payment_status' => str_replace('_', ' ', (string) $reservation->payment_status),
+                'bank_details' => $bankDetails,
+            ]);
+        } catch (\Throwable $exception) {
+            Log::warning('Failed to send reservation confirmed email', [
+                'email' => $recipientEmail,
+                'reservation_id' => $reservation->id,
+                'error' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    public function approvedReservations()
+    {
+        $reservations = Reservation::query()
+            ->with([
+                'facility:id,title',
+                'pricePlan:id,range_type,price,facility_id',
+                'user:id,name,email',
+                'payments:id,reservation_id,payment_date,payment_method,amount,currency,reference_no,recorded_by,created_at',
+            ])
+            ->whereIn('status', ['reserved', 'active'])
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'reservations' => $reservations,
+        ]);
+    }
+
+    public function addPayment(Request $request, Reservation $reservation)
+    {
+        $validated = $request->validate([
+            'payment_date' => ['required', 'date'],
+            'payment_method' => ['required', Rule::in(['cash', 'card', 'bank_transfer', 'online'])],
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'currency' => ['nullable', 'string', 'max:10'],
+            'reference_no' => ['nullable', 'string', 'max:120'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        if (!in_array($reservation->status, ['reserved', 'active'], true)) {
+            return response()->json([
+                'message' => 'Payments can be added only for approved reservations.',
+            ], 422);
+        }
+
+        $totalPaid = (float) $reservation->payments()->sum('amount');
+        $reservationAmount = abs((float) ($reservation->reservation_amount ?? 0));
+        $remainingBalance = round(max(0, $reservationAmount - $totalPaid), 2);
+        $paymentAmount = round((float) $validated['amount'], 2);
+
+        if ($remainingBalance <= 0) {
+            return response()->json([
+                'message' => 'This reservation is already fully paid.',
+                'errors' => [
+                    'amount' => ['This reservation is already fully paid.'],
+                ],
+            ], 422);
+        }
+
+        if ($paymentAmount > $remainingBalance) {
+            return response()->json([
+                'message' => 'Payment amount cannot exceed remaining balance.',
+                'errors' => [
+                    'amount' => ['Payment amount cannot exceed remaining balance of LKR ' . number_format($remainingBalance, 2) . '.'],
+                ],
+            ], 422);
+        }
+
+        ReservationPayment::create([
+            'reservation_id' => $reservation->id,
+            'payment_date' => $validated['payment_date'],
+            'payment_method' => $validated['payment_method'],
+            'amount' => $paymentAmount,
+            'currency' => $validated['currency'] ?? 'LKR',
+            'reference_no' => $validated['reference_no'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+            'recorded_by' => $request->user()?->id,
+        ]);
+
+        $reservation->refreshPaymentStatus();
+        $reservation->refresh();
+        $this->sendReservationPaymentUpdateEmail($reservation, $paymentAmount, (string) $validated['payment_method'], (string) $validated['payment_date']);
+
+        return response()->json([
+            'message' => 'Payment added successfully.',
+            'reservation' => $reservation->fresh([
+                'facility:id,title',
+                'pricePlan:id,range_type,price,facility_id',
+                'user:id,name,email',
+                'payments:id,reservation_id,payment_date,payment_method,amount,currency,reference_no,recorded_by,created_at',
+            ]),
+        ], 201);
+    }
+
+    private function sendReservationPaymentUpdateEmail(Reservation $reservation, float $lastPaymentAmount, string $lastPaymentMethod, string $lastPaymentDate): void
+    {
+        $reservation->loadMissing('facility:id,title', 'user:id,name,email');
+
+        $recipientEmail = $reservation->email ?: $reservation->user?->email;
+        if (!$recipientEmail) {
+            return;
+        }
+
+        $recipientName = trim((string) $reservation->name) !== '' ? $reservation->name : ($reservation->user?->name ?? 'Customer');
+        $total = round(abs((float) ($reservation->reservation_amount ?? 0)), 2);
+        $paid = round((float) ($reservation->paid_amount ?? 0), 2);
+        $remaining = round(max(0, $total - $paid), 2);
+
+        try {
+            $this->mailer->sendReservationPaymentUpdateEmail($recipientEmail, $recipientName, [
+                'reservation_id' => $reservation->id,
+                'facility' => $reservation->facility?->title ?? 'N/A',
+                'last_payment_amount' => number_format($lastPaymentAmount, 2),
+                'last_payment_method' => str_replace('_', ' ', $lastPaymentMethod),
+                'last_payment_date' => $lastPaymentDate,
+                'reservation_amount' => number_format($total, 2),
+                'paid_amount' => number_format($paid, 2),
+                'remaining_balance' => number_format($remaining, 2),
+                'payment_status' => ucwords(str_replace('_', ' ', (string) $reservation->payment_status)),
+            ]);
+        } catch (\Throwable $exception) {
+            Log::warning('Failed to send reservation payment update email', [
+                'email' => $recipientEmail,
+                'reservation_id' => $reservation->id,
+                'error' => $exception->getMessage(),
+            ]);
+        }
     }
 }

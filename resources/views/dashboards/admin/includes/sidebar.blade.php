@@ -60,27 +60,31 @@
         @endcan
 
         @can('Manage Settings')
-        <!-- Reservation Manager -->
+        <!-- Reservation Requests -->
         <div class="relative sidebar-dropdown"
-            data-subtitle="Reservation Manager"
+            data-subtitle="Reservation Requests"
             data-links='[
-              {"label":"Reservation Manager","href":"{{ route('reservationManagement') }}"}
+              {"label":"Reservation Requests","href":"{{ route('reservationManagement') }}"},
+              {"label":"Approved Reservations","href":"{{ route('approvedReservationManagement') }}"}
             ]'>
 
           <button class="dropdown-toggle dark:border-emerald-600 w-full flex items-center gap-3 p-2 dark:hover:bg-slate-800 transition-all">
             <div class="sidebar-icon-box">
               <i class="fas fa-calendar-check" aria-hidden="true"></i>
-              <span class="sr-only">Reservation Manager</span>
+              <span class="sr-only">Reservation Requests</span>
             </div>
             <span class="sidebar-label flex-1 text-sm font-medium text-emerald-700 dark:text-white text-left">
-              Reservation Manager
+              Reservation Requests
             </span>
             <i class="fas fa-chevron-down text-xs text-emerald-500 sidebar-label"></i>
           </button>
 
           <div class="expanded-only hidden py-1 ml-4 space-y-1">
             <a href="{{ route('reservationManagement') }}" class="block px-4 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-slate-700 rounded-md">
-              Reservation Manager
+              Reservation Requests
+            </a>
+            <a href="{{ route('approvedReservationManagement') }}" class="block px-4 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-slate-700 rounded-md">
+              Approved Reservations
             </a>
           </div>
         </div>

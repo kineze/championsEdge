@@ -5,16 +5,11 @@
       <div class="absolute -right-10 bottom-0 h-48 w-48 rounded-full bg-blue-300/25 blur-3xl dark:bg-blue-500/20"></div>
     </div>
 
-    <div class="relative flex flex-wrap gap-2 pb-4 text-[11px] font-semibold uppercase tracking-[0.12em]">
-      <span class="rounded-full border border-sky-300/70 bg-sky-100/90 px-3 py-1 text-sky-700 dark:border-sky-300/50 dark:bg-sky-400/15 dark:text-sky-100">Reserved</span>
-      <span class="rounded-full border border-emerald-300/70 bg-emerald-100/90 px-3 py-1 text-emerald-700 dark:border-emerald-300/50 dark:bg-emerald-400/15 dark:text-emerald-100">Active</span>
-    </div>
-
-    <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-700 dark:text-cyan-300">Booking Calendar</p>
-        <h3 class="mt-1 text-xl font-black tracking-tight text-slate-900 dark:text-white">{{ titleText }}</h3>
-        <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">View booked slots by month, week, or day.</p>
+        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-700 dark:text-cyan-300">Admin Calendar</p>
+        <h2 class="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white">All Bookings</h2>
+        <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Full calendar view of all reservations with customer names.</p>
       </div>
       <button
         type="button"
@@ -26,6 +21,13 @@
       </button>
     </div>
 
+    <div class="relative mt-4 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.12em]">
+      <span class="rounded-full border border-amber-300/70 bg-amber-100/90 px-3 py-1 text-amber-700 dark:border-amber-300/50 dark:bg-amber-400/15 dark:text-amber-100">Draft</span>
+      <span class="rounded-full border border-sky-300/70 bg-sky-100/90 px-3 py-1 text-sky-700 dark:border-sky-300/50 dark:bg-sky-400/15 dark:text-sky-100">Reserved</span>
+      <span class="rounded-full border border-emerald-300/70 bg-emerald-100/90 px-3 py-1 text-emerald-700 dark:border-emerald-300/50 dark:bg-emerald-400/15 dark:text-emerald-100">Active</span>
+      <span class="rounded-full border border-rose-300/70 bg-rose-100/90 px-3 py-1 text-rose-700 dark:border-rose-300/50 dark:bg-rose-400/15 dark:text-rose-100">Rejected</span>
+    </div>
+
     <div class="relative mt-4 overflow-hidden rounded-2xl border border-cyan-200/60 bg-white/90 p-2 backdrop-blur dark:border-cyan-200/30 dark:bg-slate-900/80 md:p-3">
       <FullCalendar :options="calendarOptions" />
     </div>
@@ -33,7 +35,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import axios from 'axios'
 import { useToast } from 'vue-toastification'
 import FullCalendar from '@fullcalendar/vue3'
@@ -41,37 +43,18 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 
-const props = defineProps({
-  facilityId: {
-    type: [String, Number],
-    default: null,
-  },
-})
-
 const toast = useToast()
 const loading = ref(false)
 const events = ref([])
 
-const normalizedFacilityId = computed(() => {
-  if (props.facilityId === null || props.facilityId === undefined || props.facilityId === '') return null
-  return Number(props.facilityId)
-})
-
-const titleText = computed(() => {
-  return normalizedFacilityId.value ? 'Facility Bookings' : 'All Facilities Bookings'
-})
-
 const fetchEvents = async () => {
   try {
     loading.value = true
-    const params = {}
-    if (normalizedFacilityId.value) params.facility_id = normalizedFacilityId.value
-
-    const res = await axios.get('/api/public/reservations/calendar-events', { params })
+    const res = await axios.get('/api/admin/reservations/calendar-events')
     events.value = Array.isArray(res.data.events) ? res.data.events : []
   } catch {
     events.value = []
-    toast.error('Failed to load booking calendar')
+    toast.error('Failed to load admin booking calendar')
   } finally {
     loading.value = false
   }
@@ -104,13 +87,6 @@ const calendarOptions = computed(() => ({
   slotMinTime: '05:00:00',
   slotMaxTime: '23:00:00',
 }))
-
-watch(
-  () => normalizedFacilityId.value,
-  () => {
-    fetchEvents()
-  }
-)
 
 onMounted(fetchEvents)
 </script>

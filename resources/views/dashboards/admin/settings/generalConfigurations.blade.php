@@ -14,6 +14,10 @@
             <div>
                 <working-hours-manager></working-hours-manager>
             </div>
+
+            <div class="lg:col-span-2">
+                <bank-details-manager></bank-details-manager>
+            </div>
         </div>
     </div>
 </section>

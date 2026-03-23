@@ -1,4 +1,29 @@
 <nav id="siteNav" class="fixed left-0 right-0 top-0 z-50 transition-all duration-300">
+    <div class="border-b border-white/10 bg-slate-950/90 backdrop-blur">
+        <div class="mx-auto flex max-w-7xl items-center justify-between px-5 py-2">
+            <div class="flex items-center gap-3 text-sm text-slate-200">
+                <a href="#" class="transition hover:text-cyan-300" aria-label="Facebook">
+                    <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="#" class="transition hover:text-cyan-300" aria-label="Instagram">
+                    <i class="fab fa-instagram"></i>
+                </a>
+                <a href="#" class="transition hover:text-cyan-300" aria-label="YouTube">
+                    <i class="fab fa-youtube"></i>
+                </a>
+                <a href="#" class="transition hover:text-cyan-300" aria-label="X">
+                    <i class="fab fa-x-twitter"></i>
+                </a>
+            </div>
+
+            <div class="flex items-center gap-4 text-xs text-slate-200 sm:text-sm">
+                <a href="mailto:info@championsedge.com" class="hidden transition hover:text-cyan-300 sm:inline">info@championsedge.com</a>
+                <a href="/login" class="font-semibold transition hover:text-cyan-300">Login</a>
+                <a href="/register" class="font-semibold transition hover:text-cyan-300">Register</a>
+            </div>
+        </div>
+    </div>
+
     <div class="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
         <div class="flex items-center space-x-3">
             <a href="/" class="inline-flex items-center">
@@ -6,7 +31,7 @@
             </a>
         </div>
 
-        <div class="flex items-center space-x-6 text-white mr-6">
+        <div class="flex items-center space-x-6 text-white">
             <a href="/" class="hover:text-gray-200 transition">Home</a>
 
             <div id="facilities-dropdown" class="relative">
@@ -38,8 +63,8 @@
             </div>
 
             <a href="/about-us" class="hover:text-gray-200 transition">About Us</a>
-            <a href="/reservations" class="hover:text-gray-200 transition">Reservations</a>
-            <a href="/login" class="px-4 py-2 bg-cyan-600 hover:bg-gray-700 rounded-lg font-medium transition shadow">Login</a>
+            <a href="/login" class="hover:text-gray-200 transition">Login</a>
+            <a href="/booking" class="rounded-lg bg-cyan-600 px-4 py-2 font-medium text-white shadow transition hover:bg-cyan-700">Book Now</a>
         </div>
     </div>
 </nav>

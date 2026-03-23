@@ -8,7 +8,7 @@
   </section>
 
   <section class="bg-white py-20 text-slate-900">
-    <div class="mx-auto max-w-5xl px-6">
+    <div class="w-full">
       <div class="rounded-3xl border border-slate-200 bg-zinc-200 p-6 shadow-2xl md:p-8">
         <div class="rounded-2xl border border-cyan-100 bg-white/80 px-4 py-4">
           <div class="flex items-center justify-between gap-3">
@@ -40,7 +40,20 @@
         <div v-if="currentStep === 1" class="mt-5 grid gap-5 md:grid-cols-2">
           <div>
             <label class="mb-1 inline-block text-xs font-semibold uppercase tracking-[0.12em] text-gray-600">Facility</label>
+            <select
+              v-if="!isFacilityLocked"
+              v-model.number="form.facility_id"
+              @blur="touchField('facility_id')"
+              class="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition"
+              :class="inputClass(showStep1Error('facility_id'))"
+            >
+              <option :value="null">Select a facility</option>
+              <option v-for="facility in facilities" :key="facility.id" :value="Number(facility.id)">
+                {{ facility.title }}
+              </option>
+            </select>
             <input
+              v-else
               type="text"
               :value="selectedFacilityTitle || boundFacilityTitle || 'Loading facility...'"
               disabled

@@ -89,4 +89,48 @@ class BrevoMailer
         ])->successful();
     }
 
+    public function sendReservationConfirmedEmail(string $toEmail, string $toName, array $reservationDetails): bool
+    {
+        return Http::withHeaders([
+            'api-key' => $this->apiKey,
+            'accept' => 'application/json',
+            'content-type' => 'application/json',
+        ])->post('https://api.brevo.com/v3/smtp/email', [
+            'sender' => [
+                'name' => 'Software Engineering',
+                'email' => 'helliumgk@gmail.com',
+            ],
+            'to' => [
+                ['email' => $toEmail, 'name' => $toName],
+            ],
+            'subject' => 'Reservation Confirmed',
+            'htmlContent' => view('emails.reservation-confirmed', [
+                'name' => $toName,
+                'details' => $reservationDetails,
+            ])->render(),
+        ])->successful();
+    }
+
+    public function sendReservationPaymentUpdateEmail(string $toEmail, string $toName, array $reservationDetails): bool
+    {
+        return Http::withHeaders([
+            'api-key' => $this->apiKey,
+            'accept' => 'application/json',
+            'content-type' => 'application/json',
+        ])->post('https://api.brevo.com/v3/smtp/email', [
+            'sender' => [
+                'name' => 'Software Engineering',
+                'email' => 'helliumgk@gmail.com',
+            ],
+            'to' => [
+                ['email' => $toEmail, 'name' => $toName],
+            ],
+            'subject' => 'Reservation Payment Update',
+            'htmlContent' => view('emails.reservation-payment-update', [
+                'name' => $toName,
+                'details' => $reservationDetails,
+            ])->render(),
+        ])->successful();
+    }
+
 }

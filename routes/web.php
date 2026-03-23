@@ -6,6 +6,10 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\GenaralController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MemberDashboardController;
+use App\Http\Controllers\MemberRegistrationController;
+use App\Http\Controllers\MemberRegistrationPaymentController;
+use App\Http\Controllers\MemberSubscriptionPaymentController;
 use App\Http\Controllers\ReservationController;
 
 Route::controller(GenaralController::class)->group(function () {
@@ -24,7 +28,33 @@ Route::controller(GenaralController::class)->group(function () {
     Route::get('/privacy-policy', 'privacyPolicy')->name('privacyPolicy');
 });
 
+Route::view('/member/login', 'auth.member-login')
+    ->middleware('guest')
+    ->name('member.login');
+
+Route::get('/member/register', [MemberRegistrationController::class, 'page'])
+    ->middleware('guest')
+    ->name('member.register');
+
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
+    Route::get('/member/dashboard', [MemberDashboardController::class, 'index'])->name('memberDashboard');
+});
+
+Route::get('/member/payments/seylan/checkout/{memberRegistrationPayment}', [MemberRegistrationPaymentController::class, 'checkoutPage'])
+    ->name('member.payment.seylan.checkout');
+Route::get('/member/payments/seylan/return', [MemberRegistrationPaymentController::class, 'return'])
+    ->name('member.payment.seylan.return');
+Route::get('/member/payments/success/{memberRegistrationPayment}', [MemberRegistrationPaymentController::class, 'success'])
+    ->name('member.payment.success');
+Route::get('/member/subscriptions/payments/seylan/checkout/{memberSubscriptionPayment}', [MemberSubscriptionPaymentController::class, 'checkoutPage'])
+    ->name('member.subscription.payment.seylan.checkout');
+Route::get('/member/subscriptions/payments/seylan/return', [MemberSubscriptionPaymentController::class, 'return'])
+    ->name('member.subscription.payment.seylan.return');
+Route::get('/member/subscriptions/payments/success/{memberSubscriptionPayment}', [MemberSubscriptionPaymentController::class, 'success'])
+    ->name('member.subscription.payment.success');
+
 Route::controller(ReservationController::class)->group(function () {
+    Route::get('/booking', 'publicPage')->name('publicBookingPage');
     Route::get('/reservations', 'publicPage')->name('publicReservationsPage');
 });
 
@@ -60,6 +90,7 @@ Route::middleware(['permission:Manage Settings', config('jetstream.auth_session'
 
     Route::controller(ReservationController::class)->group(function () {
         Route::get('/admin/reservations', 'reservationManagement')->name('reservationManagement');
+        Route::get('/admin/reservations/approved', 'approvedReservationManagement')->name('approvedReservationManagement');
     });
 
 });

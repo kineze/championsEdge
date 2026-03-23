@@ -3,9 +3,13 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\BankDetailController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MemberSubscriptionController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\AgeGroupController;
 use App\Http\Controllers\FacilityController;
+use App\Http\Controllers\MemberRegistrationController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\ReservationPriceController;
 use App\Http\Controllers\SubscriptionPricingController;
@@ -61,6 +65,11 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
 
     Route::get('/working-hours', [WorkingHourController::class, 'index']);
     Route::put('/working-hours/bulk', [WorkingHourController::class, 'bulkUpsert']);
+
+    Route::get('/bank-details', [BankDetailController::class, 'index']);
+    Route::post('/bank-details', [BankDetailController::class, 'store']);
+    Route::put('/bank-details/{bankDetail}', [BankDetailController::class, 'update']);
+    Route::delete('/bank-details/{bankDetail}', [BankDetailController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
@@ -72,7 +81,18 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
 
 Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
     Route::get('/reservations', [ReservationController::class, 'index']);
+    Route::get('/reservations/approved', [ReservationController::class, 'approvedReservations']);
+    Route::get('/admin/reservations/calendar-events', [ReservationController::class, 'adminCalendarEvents']);
+    Route::get('/admin/dashboard/analytics', [DashboardController::class, 'analytics']);
     Route::patch('/reservations/{reservation}/status', [ReservationController::class, 'updateStatus']);
+    Route::post('/reservations/{reservation}/payments', [ReservationController::class, 'addPayment']);
+});
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/member/subscription/summary', [MemberSubscriptionController::class, 'summary']);
+    Route::post('/member/subscription/{subscription}/renew', [MemberSubscriptionController::class, 'renew']);
+    Route::post('/member/subscription/{subscription}/cancel', [MemberSubscriptionController::class, 'cancel']);
+    Route::post('/member/subscription/{subscription}/reactivate-payment', [MemberSubscriptionController::class, 'initiateReactivationPayment']);
 });
 
 Route::get('/public/facilities', [FacilityController::class, 'publicIndex']);
@@ -81,3 +101,5 @@ Route::get('/public/reservations/meta', [ReservationController::class, 'publicMe
 Route::get('/public/reservations/calendar-events', [ReservationController::class, 'publicCalendarEvents']);
 Route::post('/public/reservations/availability', [ReservationController::class, 'checkAvailability']);
 Route::post('/public/reservations', [ReservationController::class, 'publicStore']);
+Route::get('/public/member-registration/meta', [MemberRegistrationController::class, 'meta']);
+Route::post('/public/member-registration/initiate-payment', [MemberRegistrationController::class, 'initiatePayment']);

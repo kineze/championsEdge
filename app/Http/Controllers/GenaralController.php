@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Facility;
+use App\Models\Subscription;
+use Carbon\Carbon;
 
 class GenaralController extends Controller
 {
@@ -42,6 +44,10 @@ class GenaralController extends Controller
         if (auth()->check()) {
                 $user = auth()->user();
 
+                if ($user->hasRole('Admin')) {
+                    return redirect()->route('adminDashboard');
+                }
+
                 if ($user->hasRole('Marketer')) {
 
                     if ($user && $user->marketer->is_blocked) {
@@ -49,9 +55,19 @@ class GenaralController extends Controller
                             return redirect()->route('blocked');
                     }
                     return redirect()->route('marketerDashboard');
-                } else{
-                    return redirect()->route('adminDashboard');
                 }
+
+                $hasMemberSubscription = Subscription::query()
+                    ->where('user_id', $user->id)
+                    ->where('is_blocked', false)
+                    ->whereDate('subscription_end_date', '>=', Carbon::today()->toDateString())
+                    ->exists();
+
+                if ($hasMemberSubscription || $user->hasRole('Member')) {
+                    return redirect()->route('memberDashboard');
+                }
+
+                return redirect('/');
         }else{
             return redirect()->route('login');
         }
@@ -68,6 +84,16 @@ class GenaralController extends Controller
 
         if ($user->hasRole('Admin')) {
             return redirect()->route('adminDashboard');
+        }
+
+        $hasMemberSubscription = Subscription::query()
+            ->where('user_id', $user->id)
+            ->where('is_blocked', false)
+            ->whereDate('subscription_end_date', '>=', Carbon::today()->toDateString())
+            ->exists();
+
+        if ($hasMemberSubscription || $user->hasRole('Member')) {
+            return redirect()->route('memberDashboard');
         }
 
         return redirect('/');
