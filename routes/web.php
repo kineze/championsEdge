@@ -72,6 +72,12 @@ Route::get('/training-sessions/payments/success/{trainingSessionPayment}', [Trai
     ->name('training.session.payment.success');
 Route::get('/training-sessions/{trainingSession}/purchase', [TrainingSessionPurchaseController::class, 'page'])
     ->name('trainingSessionPurchasePage');
+Route::get('/reservations/payments/seylan/checkout/{reservationGatewayPayment}', [ReservationController::class, 'reservationDepositCheckout'])
+    ->name('reservation.payment.seylan.checkout');
+Route::get('/reservations/payments/seylan/return', [ReservationController::class, 'reservationDepositReturn'])
+    ->name('reservation.payment.seylan.return');
+Route::get('/reservations/payments/success/{reservationGatewayPayment}', [ReservationController::class, 'reservationDepositSuccess'])
+    ->name('reservation.payment.success');
 
 Route::controller(ReservationController::class)->group(function () {
     Route::get('/booking', 'publicPage')->name('publicBookingPage');

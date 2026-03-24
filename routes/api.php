@@ -112,6 +112,7 @@ Route::get('/public/facilities/{facility}', [FacilityController::class, 'publicS
 Route::get('/public/reservations/meta', [ReservationController::class, 'publicMeta']);
 Route::get('/public/reservations/calendar-events', [ReservationController::class, 'publicCalendarEvents']);
 Route::post('/public/reservations/availability', [ReservationController::class, 'checkAvailability']);
+Route::post('/public/reservations/initiate-payment', [ReservationController::class, 'initiatePublicPayment']);
 Route::post('/public/reservations', [ReservationController::class, 'publicStore']);
 Route::get('/public/member-registration/meta', [MemberRegistrationController::class, 'meta']);
 Route::post('/public/member-registration/initiate-payment', [MemberRegistrationController::class, 'initiatePayment']);

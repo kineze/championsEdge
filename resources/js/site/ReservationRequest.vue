@@ -68,7 +68,7 @@
               v-model="form.start_at"
               @blur="touchField('start_at')"
               type="datetime-local"
-              class="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition"
+              class="reservation-datetime w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition"
               :class="inputClass(showStep1Error('start_at'))"
             />
             <p v-if="showStep1Error('start_at')" class="mt-1 text-xs text-red-600">{{ step1Errors.start_at }}</p>
@@ -80,7 +80,7 @@
               v-model="form.end_at"
               @blur="touchField('end_at')"
               type="datetime-local"
-              class="w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition"
+              class="reservation-datetime w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition"
               :class="inputClass(showStep1Error('end_at'))"
             />
             <p v-if="showStep1Error('end_at')" class="mt-1 text-xs text-red-600">{{ step1Errors.end_at }}</p>
@@ -259,7 +259,7 @@
           <div class="flex items-center justify-between gap-2">
             <button type="button" class="rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 transition hover:bg-slate-100" @click="currentStep = 3">Back</button>
             <button type="button" class="rounded-xl bg-cyan-600 px-4 py-2 font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60" :disabled="submitting" @click="submitReservation">
-              {{ submitting ? 'Sending...' : 'Send Booking Request' }}
+              {{ submitting ? 'Processing...' : (computedDepositAmount > 0 ? 'Pay Deposit & Send Request' : 'Send Booking Request') }}
             </button>
           </div>
         </div>
@@ -690,7 +690,7 @@ const submitReservation = async () => {
 
   try {
     submitting.value = true
-    const res = await axios.post('/api/public/reservations', {
+    const res = await axios.post('/api/public/reservations/initiate-payment', {
       user_id: form.value.user_id,
       facility_id: Number(form.value.facility_id),
       price_plan_id: Number(form.value.price_plan_id),
@@ -702,6 +702,12 @@ const submitReservation = async () => {
       deposit_amount: Number(computedDepositAmount.value || 0),
       reservation_amount: Number(calculatedTotal.value || 0),
     })
+
+    const checkoutUrl = res.data?.payment?.checkout_url
+    if (checkoutUrl) {
+      window.location.href = checkoutUrl
+      return
+    }
 
     lastReservation.value = res.data.reservation || null
     currentStep.value = 5
@@ -819,3 +825,15 @@ watch(
 
 onMounted(fetchMeta)
 </script>
+
+<style scoped>
+.reservation-datetime {
+  color-scheme: light;
+}
+
+.reservation-datetime::-webkit-calendar-picker-indicator {
+  filter: invert(0);
+  opacity: 0.95;
+  cursor: pointer;
+}
+</style>

@@ -5,13 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\BankDetail;
 use App\Models\Facility;
 use App\Models\Reservation;
+use App\Models\ReservationGatewayPayment;
 use App\Models\ReservationPayment;
 use App\Models\ReservationPrice;
 use App\Models\WorkingHour;
 use App\Services\BrevoMailer;
+use App\Services\SeylanGateway;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 
 class ReservationController extends Controller
@@ -282,6 +285,298 @@ class ReservationController extends Controller
             ],
             'reservation' => $reservation->load(['user.profile', 'facility', 'pricePlan']),
         ], 201);
+    }
+
+    public function initiatePublicPayment(Request $request, SeylanGateway $gateway)
+    {
+        $validated = $request->validate([
+            'user_id' => 'nullable|integer|exists:users,id',
+            'facility_id' => 'required|integer|exists:facilities,id',
+            'price_plan_id' => 'required|integer|exists:reservation_prices,id',
+            'start_at' => 'required|date',
+            'end_at' => 'required|date|after:start_at',
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:30',
+            'email' => 'nullable|email|max:255',
+            'deposit_amount' => 'nullable|numeric|min:0',
+            'reservation_amount' => 'nullable|numeric|min:0',
+        ]);
+
+        $plan = ReservationPrice::with('facility:id,title,status')
+            ->findOrFail($validated['price_plan_id']);
+
+        if ((int) $plan->facility_id !== (int) $validated['facility_id']) {
+            return response()->json([
+                'message' => 'Selected price plan does not belong to this facility.',
+            ], 422);
+        }
+
+        if ($plan->facility?->status !== 'active') {
+            return response()->json([
+                'message' => 'Selected facility is not available for reservations.',
+            ], 422);
+        }
+
+        $rangeStart = Carbon::parse($validated['start_at']);
+        $rangeEnd = Carbon::parse($validated['end_at']);
+
+        $availability = $this->evaluateAvailability((int) $validated['facility_id'], $rangeStart, $rangeEnd);
+        if (!$availability['ok']) {
+            return response()->json([
+                'message' => $availability['reasons'][0] ?? 'Selected time range is not available.',
+                'reasons' => $availability['reasons'],
+            ], 422);
+        }
+
+        [$durationHours, $billableUnits, $calculatedTotal] = $this->calculateAmounts($plan, $rangeStart, $rangeEnd);
+
+        $minimumDeposit = $plan->is_deposit_required ? (float) $plan->deposit_amount : 0.0;
+        $depositAmount = $plan->is_deposit_required
+            ? max($minimumDeposit, (float) ($validated['deposit_amount'] ?? 0))
+            : max(0, (float) ($validated['deposit_amount'] ?? 0));
+
+        if ($plan->is_deposit_required && $depositAmount <= 0) {
+            return response()->json([
+                'message' => 'Deposit amount is required for this plan.',
+            ], 422);
+        }
+
+        if ($depositAmount > $calculatedTotal) {
+            $depositAmount = $calculatedTotal;
+        }
+
+        $reservation = Reservation::create([
+            'user_id' => $validated['user_id'] ?? $request->user()?->id,
+            'facility_id' => $validated['facility_id'],
+            'price_plan_id' => $validated['price_plan_id'],
+            'day_range' => [
+                'start_at' => $validated['start_at'],
+                'end_at' => $validated['end_at'],
+            ],
+            'name' => $validated['name'],
+            'phone' => $validated['phone'],
+            'email' => $validated['email'] ?? null,
+            'deposit_amount' => $depositAmount,
+            'reservation_amount' => $calculatedTotal,
+            'status' => 'draft',
+        ]);
+
+        $recipientEmail = $validated['email'] ?? $request->user()?->email;
+        $recipientName = $validated['name'] ?? $request->user()?->name ?? 'Customer';
+        if ($recipientEmail) {
+            try {
+                $this->mailer->sendReservationReceivedEmail($recipientEmail, $recipientName, [
+                    'facility' => $plan->facility?->title ?? 'N/A',
+                    'plan' => $plan->range_type,
+                    'start_at' => $validated['start_at'],
+                    'end_at' => $validated['end_at'],
+                    'duration_hours' => number_format($durationHours, 2),
+                    'billable_units' => number_format($billableUnits, 2),
+                    'unit_price' => number_format((float) $plan->price, 2),
+                    'deposit_amount' => number_format((float) $depositAmount, 2),
+                    'reservation_amount' => number_format((float) $calculatedTotal, 2),
+                    'status' => 'draft',
+                ]);
+            } catch (\Throwable $exception) {
+                Log::warning('Failed to send reservation received email', [
+                    'email' => $recipientEmail,
+                    'reservation_id' => $reservation->id,
+                    'error' => $exception->getMessage(),
+                ]);
+            }
+        }
+
+        if ((float) $depositAmount <= 0) {
+            return response()->json([
+                'message' => 'Reservation request sent successfully.',
+                'summary' => [
+                    'duration_hours' => round($durationHours, 2),
+                    'billable_units' => round($billableUnits, 2),
+                    'unit_price' => (float) $plan->price,
+                    'total' => round((float) $calculatedTotal, 2),
+                    'deposit_amount' => 0,
+                    'remaining_balance' => round((float) $calculatedTotal, 2),
+                ],
+                'payment' => null,
+                'reservation' => $reservation->load(['user.profile', 'facility', 'pricePlan']),
+            ], 201);
+        }
+
+        $amount = number_format((float) $depositAmount, 2, '.', '');
+        $gatewayOrderId = 'RSV_' . $reservation->id . '_' . now()->format('YmdHis');
+        $payload = [
+            'apiOperation' => 'INITIATE_CHECKOUT',
+            'interaction' => [
+                'operation' => 'AUTHORIZE',
+                'merchant' => [
+                    'name' => config('app.name', 'Champions Edge'),
+                ],
+                'returnUrl' => route('reservation.payment.seylan.return', ['oid' => $gatewayOrderId], true),
+            ],
+            'order' => [
+                'id' => $gatewayOrderId,
+                'currency' => 'LKR',
+                'amount' => $amount,
+                'description' => 'Reservation deposit payment for booking #' . $reservation->id,
+            ],
+        ];
+
+        $response = $gateway->initiateCheckout($payload);
+
+        $payment = ReservationGatewayPayment::create([
+            'reservation_id' => $reservation->id,
+            'user_id' => $request->user()?->id,
+            'payment_action' => 'deposit',
+            'order_gateway_id' => $gatewayOrderId,
+            'session_id' => data_get($response, 'session.id'),
+            'success_indicator' => data_get($response, 'successIndicator'),
+            'amount' => $amount,
+            'currency' => 'LKR',
+            'api_operation' => 'AUTHORIZE',
+            'status' => 'PENDING',
+            'raw_request' => $payload,
+            'raw_response' => $response,
+        ]);
+
+        return response()->json([
+            'message' => 'Reservation request created. Proceed with deposit payment.',
+            'summary' => [
+                'duration_hours' => round($durationHours, 2),
+                'billable_units' => round($billableUnits, 2),
+                'unit_price' => (float) $plan->price,
+                'total' => round((float) $calculatedTotal, 2),
+                'deposit_amount' => round((float) $depositAmount, 2),
+                'remaining_balance' => round(max(0, (float) $calculatedTotal - (float) $depositAmount), 2),
+            ],
+            'payment' => [
+                'gateway' => 'seylan',
+                'checkout_url' => route('reservation.payment.seylan.checkout', ['reservationGatewayPayment' => $payment->id]),
+                'payment_id' => $payment->id,
+            ],
+            'reservation' => $reservation->load(['user.profile', 'facility', 'pricePlan']),
+        ], 201);
+    }
+
+    public function reservationDepositCheckout(ReservationGatewayPayment $reservationGatewayPayment, SeylanGateway $gateway)
+    {
+        if (!$reservationGatewayPayment->session_id) {
+            return redirect()->route('publicReservationsPage')->with('error', 'Payment session is missing.');
+        }
+
+        return view('site.payment.member-seylan-checkout', [
+            'payment' => $reservationGatewayPayment,
+            'sessionId' => $reservationGatewayPayment->session_id,
+            'baseUrl' => $gateway->baseUrl(),
+        ]);
+    }
+
+    public function reservationDepositReturn(Request $request, SeylanGateway $gateway)
+    {
+        $gatewayOrderId = $request->query('oid');
+        $resultIndicator = $request->input('resultIndicator');
+
+        if (!$gatewayOrderId || !$resultIndicator) {
+            return redirect()->route('publicReservationsPage')->with('error', 'Invalid payment response.');
+        }
+
+        $payment = ReservationGatewayPayment::query()->where('order_gateway_id', $gatewayOrderId)->first();
+        if (!$payment) {
+            return redirect()->route('publicReservationsPage')->with('error', 'Payment record not found.');
+        }
+
+        $reservation = Reservation::find($payment->reservation_id);
+        if (!$reservation) {
+            return redirect()->route('publicReservationsPage')->with('error', 'Reservation record not found.');
+        }
+
+        if ($resultIndicator !== $payment->success_indicator) {
+            $payment->update([
+                'status' => 'FAILED',
+                'raw_response' => ['return_request' => $request->all()],
+            ]);
+            $reservation->update(['status' => 'rejected']);
+            return redirect()->route('publicReservationsPage')->with('error', 'Payment verification failed.');
+        }
+
+        try {
+            $orderResponse = $gateway->retrieveOrder($gatewayOrderId);
+        } catch (\Throwable $e) {
+            Log::error('Reservation deposit payment verify failed', [
+                'gateway_order_id' => $gatewayOrderId,
+                'error' => $e->getMessage(),
+            ]);
+            return redirect()->route('publicReservationsPage')->with('error', 'Unable to verify payment.');
+        }
+
+        $orderResult = strtoupper((string) data_get($orderResponse, 'result'));
+        $isSuccess = $orderResult === 'SUCCESS';
+
+        $payment->update([
+            'status' => $isSuccess ? 'AUTHORIZED' : 'FAILED',
+            'transaction_id' => data_get($orderResponse, 'transaction[0].id'),
+            'paid_at' => $isSuccess ? now() : null,
+            'raw_response' => $orderResponse,
+        ]);
+
+        if (!$isSuccess) {
+            $reservation->update(['status' => 'rejected']);
+            return redirect()->route('publicReservationsPage')->with('error', 'Deposit payment was declined by bank.');
+        }
+
+        $existingPayment = ReservationPayment::query()
+            ->where('reservation_id', $reservation->id)
+            ->where('payment_method', 'online')
+            ->where('reference_no', $payment->transaction_id ?: $payment->order_gateway_id)
+            ->first();
+
+        if (!$existingPayment) {
+            ReservationPayment::create([
+                'reservation_id' => $reservation->id,
+                'payment_date' => Carbon::today()->toDateString(),
+                'payment_method' => 'online',
+                'amount' => (float) $payment->amount,
+                'currency' => $payment->currency ?: 'LKR',
+                'reference_no' => $payment->transaction_id ?: $payment->order_gateway_id,
+                'notes' => 'Reservation deposit paid via Seylan checkout.',
+                'recorded_by' => $payment->user_id,
+            ]);
+
+            $reservation->refreshPaymentStatus();
+            $reservation->refresh();
+            $this->sendReservationPaymentUpdateEmail(
+                $reservation,
+                (float) $payment->amount,
+                'online',
+                Carbon::today()->toDateString()
+            );
+        }
+
+        $successUrl = URL::temporarySignedRoute(
+            'reservation.payment.success',
+            now()->addDays(2),
+            ['reservationGatewayPayment' => $payment->id]
+        );
+
+        return redirect()->to($successUrl);
+    }
+
+    public function reservationDepositSuccess(Request $request, ReservationGatewayPayment $reservationGatewayPayment)
+    {
+        if (!$request->hasValidSignature()) {
+            abort(403);
+        }
+
+        if (strtoupper((string) $reservationGatewayPayment->status) !== 'AUTHORIZED') {
+            return redirect()->route('publicReservationsPage')->with('error', 'Payment is not authorized.');
+        }
+
+        $reservation = Reservation::with(['facility:id,title', 'pricePlan:id,range_type,price'])
+            ->findOrFail($reservationGatewayPayment->reservation_id);
+
+        return view('site.payment.reservation-deposit-success', [
+            'reservation' => $reservation,
+            'payment' => $reservationGatewayPayment,
+        ]);
     }
 
     public function checkAvailability(Request $request)
