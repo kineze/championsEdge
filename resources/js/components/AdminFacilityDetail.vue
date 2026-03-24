@@ -118,6 +118,16 @@
               >
                 Training Sessions
               </button>
+              <button
+                type="button"
+                class="rounded-lg px-3 py-1.5 text-sm font-semibold transition"
+                :class="activeTab === 'extraItems'
+                  ? 'bg-cyan-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'"
+                @click="activeTab = 'extraItems'"
+              >
+                Extra Items
+              </button>
             </div>
 
             <div class="pt-4">
@@ -131,6 +141,10 @@
               />
               <facility-training-session-manager
                 v-else-if="activeTab === 'training'"
+                :facility-id="props.facilityId"
+              />
+              <facility-extra-item-manager
+                v-else-if="activeTab === 'extraItems'"
                 :facility-id="props.facilityId"
               />
               <div

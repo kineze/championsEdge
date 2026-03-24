@@ -16,6 +16,7 @@ import BankDetailsManager from './components/BankDetailsManager.vue';
 import FacilitySubscriptionPricingManager from './components/FacilitySubscriptionPricingManager.vue';
 import FacilityReservationPricingManager from './components/FacilityReservationPricingManager.vue';
 import FacilityTrainingSessionManager from './components/FacilityTrainingSessionManager.vue';
+import FacilityExtraItemManager from './components/FacilityExtraItemManager.vue';
 import SubscriptionManager from './components/SubscriptionManager.vue';
 import ReservationManager from './components/ReservationManager.vue';
 import AdminBookingCalendar from './components/AdminBookingCalendar.vue';
@@ -57,6 +58,7 @@ app.use(Toast, {
 .component('facility-subscription-pricing-manager', FacilitySubscriptionPricingManager)
 .component('facility-reservation-pricing-manager', FacilityReservationPricingManager)
 .component('facility-training-session-manager', FacilityTrainingSessionManager)
+.component('facility-extra-item-manager', FacilityExtraItemManager)
 .component('subscription-manager', SubscriptionManager)
 .component('reservation-manager', ReservationManager)
 .component('admin-booking-calendar', AdminBookingCalendar)

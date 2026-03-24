@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ReservationController extends Controller
 {
@@ -186,6 +187,12 @@ class ReservationController extends Controller
             'email' => 'nullable|email|max:255',
             'deposit_amount' => 'nullable|numeric|min:0',
             'reservation_amount' => 'nullable|numeric|min:0',
+            'extra_items' => 'nullable|array',
+            'extra_items.*.facility_id' => 'required|integer|exists:facilities,id',
+            'extra_items.*.name' => 'required|string|max:255',
+            'extra_items.*.price_per_unit' => 'required|numeric|min:0',
+            'extra_items.*.unit_type' => 'required|string|max:50',
+            'extra_items.*.units' => 'required|numeric|min:0.01',
         ]);
 
         $plan = ReservationPrice::with('facility:id,title,status')
@@ -221,6 +228,9 @@ class ReservationController extends Controller
         }
 
         [$durationHours, $billableUnits, $calculatedTotal] = $this->calculateAmounts($plan, $rangeStart, $rangeEnd);
+        $extraItems = $this->normalizeExtraItems($validated['extra_items'] ?? [], (int) $validated['facility_id']);
+        $extraItemsTotal = $this->calculateExtraItemsTotal($extraItems);
+        $calculatedTotal += $extraItemsTotal;
 
         $minimumDeposit = $plan->is_deposit_required ? (float) $plan->deposit_amount : 0.0;
         $depositAmount = $plan->is_deposit_required
@@ -239,6 +249,7 @@ class ReservationController extends Controller
                 'start_at' => $validated['start_at'],
                 'end_at' => $validated['end_at'],
             ],
+            'extra_items' => $extraItems,
             'name' => $validated['name'],
             'phone' => $validated['phone'],
             'email' => $validated['email'] ?? null,
@@ -260,6 +271,7 @@ class ReservationController extends Controller
                     'duration_hours' => number_format($durationHours, 2),
                     'billable_units' => number_format($billableUnits, 2),
                     'unit_price' => number_format((float) $plan->price, 2),
+                    'extra_items_total' => number_format((float) $extraItemsTotal, 2),
                     'deposit_amount' => number_format((float) $depositAmount, 2),
                     'reservation_amount' => number_format((float) $calculatedTotal, 2),
                     'status' => 'draft',
@@ -279,6 +291,7 @@ class ReservationController extends Controller
                 'duration_hours' => round($durationHours, 2),
                 'billable_units' => round($billableUnits, 2),
                 'unit_price' => (float) $plan->price,
+                'extra_items_total' => round((float) $extraItemsTotal, 2),
                 'total' => round((float) $calculatedTotal, 2),
                 'deposit_amount' => round((float) $depositAmount, 2),
                 'remaining_balance' => round(max(0, (float) $calculatedTotal - (float) $depositAmount), 2),
@@ -300,6 +313,12 @@ class ReservationController extends Controller
             'email' => 'nullable|email|max:255',
             'deposit_amount' => 'nullable|numeric|min:0',
             'reservation_amount' => 'nullable|numeric|min:0',
+            'extra_items' => 'nullable|array',
+            'extra_items.*.facility_id' => 'required|integer|exists:facilities,id',
+            'extra_items.*.name' => 'required|string|max:255',
+            'extra_items.*.price_per_unit' => 'required|numeric|min:0',
+            'extra_items.*.unit_type' => 'required|string|max:50',
+            'extra_items.*.units' => 'required|numeric|min:0.01',
         ]);
 
         $plan = ReservationPrice::with('facility:id,title,status')
@@ -329,6 +348,9 @@ class ReservationController extends Controller
         }
 
         [$durationHours, $billableUnits, $calculatedTotal] = $this->calculateAmounts($plan, $rangeStart, $rangeEnd);
+        $extraItems = $this->normalizeExtraItems($validated['extra_items'] ?? [], (int) $validated['facility_id']);
+        $extraItemsTotal = $this->calculateExtraItemsTotal($extraItems);
+        $calculatedTotal += $extraItemsTotal;
 
         $minimumDeposit = $plan->is_deposit_required ? (float) $plan->deposit_amount : 0.0;
         $depositAmount = $plan->is_deposit_required
@@ -353,6 +375,7 @@ class ReservationController extends Controller
                 'start_at' => $validated['start_at'],
                 'end_at' => $validated['end_at'],
             ],
+            'extra_items' => $extraItems,
             'name' => $validated['name'],
             'phone' => $validated['phone'],
             'email' => $validated['email'] ?? null,
@@ -373,6 +396,7 @@ class ReservationController extends Controller
                     'duration_hours' => number_format($durationHours, 2),
                     'billable_units' => number_format($billableUnits, 2),
                     'unit_price' => number_format((float) $plan->price, 2),
+                    'extra_items_total' => number_format((float) $extraItemsTotal, 2),
                     'deposit_amount' => number_format((float) $depositAmount, 2),
                     'reservation_amount' => number_format((float) $calculatedTotal, 2),
                     'status' => 'draft',
@@ -393,6 +417,7 @@ class ReservationController extends Controller
                     'duration_hours' => round($durationHours, 2),
                     'billable_units' => round($billableUnits, 2),
                     'unit_price' => (float) $plan->price,
+                    'extra_items_total' => round((float) $extraItemsTotal, 2),
                     'total' => round((float) $calculatedTotal, 2),
                     'deposit_amount' => 0,
                     'remaining_balance' => round((float) $calculatedTotal, 2),
@@ -444,6 +469,7 @@ class ReservationController extends Controller
                 'duration_hours' => round($durationHours, 2),
                 'billable_units' => round($billableUnits, 2),
                 'unit_price' => (float) $plan->price,
+                'extra_items_total' => round((float) $extraItemsTotal, 2),
                 'total' => round((float) $calculatedTotal, 2),
                 'deposit_amount' => round((float) $depositAmount, 2),
                 'remaining_balance' => round(max(0, (float) $calculatedTotal - (float) $depositAmount), 2),
@@ -854,6 +880,40 @@ class ReservationController extends Controller
         $total = round($billableUnits * (float) $plan->price, 2);
 
         return [$durationHours, $billableUnits, $total];
+    }
+
+    private function normalizeExtraItems(array $extraItems, int $facilityId): array
+    {
+        $normalized = [];
+
+        foreach ($extraItems as $item) {
+            $itemFacilityId = (int) ($item['facility_id'] ?? 0);
+            if ($itemFacilityId !== $facilityId) {
+                throw ValidationException::withMessages([
+                    'extra_items' => ['Each extra item must belong to the selected facility.'],
+                ]);
+            }
+
+            $normalized[] = [
+                'facility_id' => $itemFacilityId,
+                'name' => trim((string) ($item['name'] ?? '')),
+                'price_per_unit' => round((float) ($item['price_per_unit'] ?? 0), 2),
+                'unit_type' => trim((string) ($item['unit_type'] ?? '')),
+                'units' => round((float) ($item['units'] ?? 0), 2),
+            ];
+        }
+
+        return $normalized;
+    }
+
+    private function calculateExtraItemsTotal(array $extraItems): float
+    {
+        $total = 0.0;
+        foreach ($extraItems as $item) {
+            $total += ((float) ($item['price_per_unit'] ?? 0)) * ((float) ($item['units'] ?? 0));
+        }
+
+        return round($total, 2);
     }
 
     private function sortByWeekDay(array $hours): array

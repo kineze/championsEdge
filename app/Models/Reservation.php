@@ -16,6 +16,7 @@ class Reservation extends Model
         'email',
         'price_plan_id',
         'day_range',
+        'extra_items',
         'deposit_amount',
         'reservation_amount',
         'status',
@@ -25,6 +26,7 @@ class Reservation extends Model
 
     protected $casts = [
         'day_range' => 'array',
+        'extra_items' => 'array',
         'deposit_amount' => 'decimal:2',
         'reservation_amount' => 'decimal:2',
         'paid_amount' => 'decimal:2',

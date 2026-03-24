@@ -48,4 +48,9 @@ class Facility extends Model
     {
         return $this->hasMany(TrainingSession::class);
     }
+
+    public function extraItems()
+    {
+        return $this->hasMany(FacilityExtraItem::class);
+    }
 }

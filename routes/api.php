@@ -9,6 +9,7 @@ use App\Http\Controllers\MemberSubscriptionController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\AgeGroupController;
 use App\Http\Controllers\FacilityController;
+use App\Http\Controllers\FacilityExtraItemController;
 use App\Http\Controllers\MemberRegistrationController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\ReservationPriceController;
@@ -62,6 +63,11 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
     Route::post('/facilities/{facility}/training-sessions', [TrainingSessionController::class, 'store']);
     Route::put('/facilities/{facility}/training-sessions/{trainingSession}', [TrainingSessionController::class, 'update']);
     Route::delete('/facilities/{facility}/training-sessions/{trainingSession}', [TrainingSessionController::class, 'destroy']);
+    Route::get('/facilities/{facility}/extra-items', [FacilityExtraItemController::class, 'index']);
+    Route::get('/facilities/{facility}/extra-items/{facilityExtraItem}', [FacilityExtraItemController::class, 'show']);
+    Route::post('/facilities/{facility}/extra-items', [FacilityExtraItemController::class, 'store']);
+    Route::put('/facilities/{facility}/extra-items/{facilityExtraItem}', [FacilityExtraItemController::class, 'update']);
+    Route::delete('/facilities/{facility}/extra-items/{facilityExtraItem}', [FacilityExtraItemController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
