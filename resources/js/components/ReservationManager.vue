@@ -337,6 +337,22 @@
             <div>
               <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Amount</label>
               <input v-model.number="paymentForm.amount" type="number" step="0.01" min="0.01" :max="remainingBalance(paymentReservation)" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-cyan-200 transition focus:ring-2 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200" />
+              <div class="mt-2 flex items-center gap-2">
+                <button
+                  type="button"
+                  class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                  @click="setPaymentAmount(remainingBalance(paymentReservation))"
+                >
+                  Use Full Remaining
+                </button>
+                <button
+                  type="button"
+                  class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                  @click="setPaymentAmount(halfRemainingBalance(paymentReservation))"
+                >
+                  Use 50% Remaining
+                </button>
+              </div>
             </div>
 
             <div>
@@ -351,6 +367,28 @@
 
             <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-950/40 dark:text-slate-300">
               Total: {{ formatCurrency(normalizedTotal(paymentReservation)) }} · Paid: {{ formatCurrency(paymentReservation.paid_amount) }} · Remaining: {{ formatCurrency(remainingBalance(paymentReservation)) }}
+            </div>
+
+            <div class="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-950/40">
+              <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Previous Payments</p>
+              <div v-if="!paymentReservation.payments || paymentReservation.payments.length === 0" class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                No previous payments recorded.
+              </div>
+              <div v-else class="mt-2 space-y-2">
+                <div
+                  v-for="payment in paymentReservation.payments"
+                  :key="`payment_modal_${payment.id}`"
+                  class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-900/40"
+                >
+                  <p class="font-semibold text-slate-800 dark:text-slate-100">
+                    {{ formatCurrency(payment.amount) }} · {{ prettifyPaymentMethod(payment.payment_method) }}
+                  </p>
+                  <p class="text-slate-500 dark:text-slate-400">
+                    {{ formatDateTime(payment.payment_date) }}
+                    <span v-if="payment.reference_no"> · Ref: {{ payment.reference_no }}</span>
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div class="flex justify-end gap-2 pt-2">
@@ -510,6 +548,15 @@ const remainingBalance = (reservation) => {
   return Math.max(0, total - paid)
 }
 
+const halfRemainingBalance = (reservation) => {
+  const remaining = remainingBalance(reservation)
+  return Number((remaining / 2).toFixed(2))
+}
+
+const setPaymentAmount = (value) => {
+  paymentForm.value.amount = Number(Number(value || 0).toFixed(2))
+}
+
 const openPaymentModal = (reservation) => {
   paymentReservation.value = reservation
   paymentForm.value = {
@@ -585,6 +632,15 @@ const prettifyRangeType = (type) => {
   if (type === 'per_day') return 'Per Day'
   if (type === 'per_hour') return 'Per Hour'
   return '-'
+}
+
+const prettifyPaymentMethod = (value) => {
+  const method = String(value || '').toLowerCase()
+  if (method === 'bank_transfer') return 'Bank Transfer'
+  if (method === 'online') return 'Online'
+  if (method === 'card') return 'Card'
+  if (method === 'cash') return 'Cash'
+  return method || '-'
 }
 
 const formatCurrency = (value) => {
