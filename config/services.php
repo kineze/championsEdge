@@ -38,4 +38,12 @@ return [
         'key' => env('BREVO_API_KEY'),
     ],
 
+    'ollama' => [
+        'base_url' => env('OLLAMA_BASE_URL', 'http://localhost:11434'),
+        'chat_model' => env('OLLAMA_CHAT_MODEL', 'qwen2.5:1.5b'),
+        'embed_model' => env('OLLAMA_EMBED_MODEL', 'nomic-embed-text'),
+        'timeout' => (int) env('OLLAMA_TIMEOUT', 100),
+        'connect_timeout' => (int) env('OLLAMA_CONNECT_TIMEOUT', 5),
+    ],
+
 ];

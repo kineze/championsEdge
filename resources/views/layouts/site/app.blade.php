@@ -22,6 +22,8 @@
             <main>
                 @yield('content')
             </main>
+
+            <ollama-chat-widget></ollama-chat-widget>
         </div>
 
         @include('site.includes.footer')

@@ -37,6 +37,7 @@ import SiteNavigation from './site/SiteNavigation.vue';
 import TrainingSessionsPage from './site/TrainingSessions.vue';
 import TrainingSessionDetail from './site/TrainingSessionDetail.vue';
 import TrainingSessionPurchasePage from './site/TrainingSessionPurchase.vue';
+import OllamaChatWidget from './site/OllamaChatWidget.vue';
 
 const app = createApp({})
 
@@ -79,5 +80,6 @@ app.use(Toast, {
 .component('training-sessions-page', TrainingSessionsPage)
 .component('training-session-detail', TrainingSessionDetail)
 .component('training-session-purchase-page', TrainingSessionPurchasePage)
+.component('ollama-chat-widget', OllamaChatWidget)
 
 .mount('#app')

@@ -18,6 +18,7 @@ use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\TrainingSessionController;
 use App\Http\Controllers\TrainingSessionPurchaseController;
 use App\Http\Controllers\WorkingHourController;
+use App\Http\Controllers\OllamaChatController;
 
 Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
 
@@ -124,3 +125,4 @@ Route::get('/public/member-registration/meta', [MemberRegistrationController::cl
 Route::post('/public/member-registration/initiate-payment', [MemberRegistrationController::class, 'initiatePayment']);
 Route::get('/public/training-sessions', [TrainingSessionController::class, 'publicIndex']);
 Route::get('/public/training-sessions/{trainingSession}', [TrainingSessionController::class, 'publicShow']);
+Route::post('/public/assistant/chat', [OllamaChatController::class, 'publicChat']);
