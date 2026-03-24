@@ -17,6 +17,12 @@
           </div>
           <div class="flex items-center gap-2">
             <a
+              href="/user/profile"
+              class="rounded-xl border border-slate-300 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              Edit Profile
+            </a>
+            <a
               href="/member/register"
               class="rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700"
             >

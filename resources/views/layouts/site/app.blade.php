@@ -10,6 +10,7 @@
         @include('site.includes.headerlinks')
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @livewireStyles
     </head>
     <body
         class="bg-white text-slate-900"
@@ -28,5 +29,7 @@
 
         @include('site.includes.footer')
         @include('site.includes.footerlinks')
+        @livewireScripts
+        @stack('modals')
     </body>
 </html>

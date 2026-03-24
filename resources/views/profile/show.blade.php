@@ -1,14 +1,15 @@
-@extends('layouts.admin.app')
+@php($isAdmin = auth()->user()?->hasRole('Admin'))
+@extends($isAdmin ? 'layouts.admin.app' : 'layouts.site.app')
 
 @section('content')
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Profile') }}
-        </h2>
-    </x-slot>
+    <section class="{{ $isAdmin ? 'px-2 py-4 sm:px-3' : 'min-h-screen bg-slate-100 px-4 pb-16 pt-32 dark:bg-slate-950' }}">
+        <div class="mx-auto max-w-7xl">
+            <div class="mb-6 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+                <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ __('Profile Settings') }}</h1>
+                <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">{{ __('Manage your account profile, password, and security settings.') }}</p>
+            </div>
 
-    <div>
-        <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
+            <div class="rounded-2xl border border-slate-200 bg-white/80 p-2 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 sm:p-4">
             @if (Laravel\Fortify\Features::canUpdateProfileInformation())
                 @livewire('profile.update-profile-information-form')
 
@@ -44,7 +45,8 @@
                 </div>
             @endif
             @endrole
+            </div>
         </div>
-    </div>
+    </section>
 
 @endsection
