@@ -20,6 +20,11 @@
     @role('Marketer')
         @include('dashboards.marketer.includes.sidebar')
     @endrole
+
+    @role('Trainer')
+        @include('dashboards.trainer.includes.sidebar')
+    @endrole
+
        
     <main id="mainContent" class="relative z-50 min-h-screen rounded-xl bg-gradient-to-b from-slate-100 via-white to-slate-100 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 duration-200 ease-soft-in-out transition-colors">
 

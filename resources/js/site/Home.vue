@@ -221,40 +221,7 @@ onUnmounted(() => {
     </div>
   </section>
 
-  <!-- MISSION & VISION SECTION -->
-  <section class="bg-white py-28">
-    <div class="mx-auto grid max-w-7xl items-center gap-16 px-6 md:grid-cols-3">
-      <div>
-        <h3 class="mb-4 text-2xl font-bold">Our Mission</h3>
-        <p class="text-justify leading-relaxed text-gray-600">
-          Providing modern sports facilities to improve the mental and physical
-          well-being of every age group. We aim to motivate and develop
-          athletes by creating opportunities to compete at national and
-          international levels while ensuring access to advanced technology
-          and world-class infrastructure.
-        </p>
-      </div>
-
-      <div class="flex justify-center">
-        <img
-          src="/images/sports2.png"
-          alt="Athlete Illustration"
-          class="max-h-[200px] opacity-70"
-        />
-      </div>
-
-      <div>
-        <h3 class="mb-4 text-2xl font-bold">Our Vision</h3>
-        <p class="text-justify leading-relaxed text-gray-600">
-          To create a healthy, active, and disciplined community by
-          nurturing talent, promoting excellence, and building a
-          sustainable sports culture that inspires future generations.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <!-- TRAINING SESSIONS SECTION -->
+    <!-- TRAINING SESSIONS SECTION -->
   <section class="bg-white py-24">
     <div class="mx-auto max-w-7xl px-6">
       <div class="mb-8 flex flex-wrap items-end justify-between gap-3">
@@ -328,4 +295,39 @@ onUnmounted(() => {
       </template>
     </div>
   </section>
+
+  <!-- MISSION & VISION SECTION -->
+  <section class="bg-white py-28">
+    <div class="mx-auto grid max-w-7xl items-center gap-16 px-6 md:grid-cols-3">
+      <div>
+        <h3 class="mb-4 text-2xl font-bold">Our Mission</h3>
+        <p class="text-justify leading-relaxed text-gray-600">
+          Providing modern sports facilities to improve the mental and physical
+          well-being of every age group. We aim to motivate and develop
+          athletes by creating opportunities to compete at national and
+          international levels while ensuring access to advanced technology
+          and world-class infrastructure.
+        </p>
+      </div>
+
+      <div class="flex justify-center">
+        <img
+          src="/images/sports2.png"
+          alt="Athlete Illustration"
+          class="max-h-[200px] opacity-70"
+        />
+      </div>
+
+      <div>
+        <h3 class="mb-4 text-2xl font-bold">Our Vision</h3>
+        <p class="text-justify leading-relaxed text-gray-600">
+          To create a healthy, active, and disciplined community by
+          nurturing talent, promoting excellence, and building a
+          sustainable sports culture that inspires future generations.
+        </p>
+      </div>
+    </div>
+  </section>
+
+
 </template>

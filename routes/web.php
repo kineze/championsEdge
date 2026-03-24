@@ -12,6 +12,7 @@ use App\Http\Controllers\MemberRegistrationController;
 use App\Http\Controllers\MemberRegistrationPaymentController;
 use App\Http\Controllers\MemberSubscriptionPaymentController;
 use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\TrainerDashboardController;
 use App\Http\Controllers\TrainingSessionPurchaseController;
 
 Route::controller(GenaralController::class)->group(function () {
@@ -49,6 +50,7 @@ Route::get('/member/register', [MemberRegistrationController::class, 'page'])
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
     Route::get('/member/dashboard', [MemberDashboardController::class, 'index'])->name('memberDashboard');
+    Route::get('/trainer/dashboard', [TrainerDashboardController::class, 'index'])->name('trainerDashboard');
 });
 
 Route::get('/member/payments/seylan/checkout/{memberRegistrationPayment}', [MemberRegistrationPaymentController::class, 'checkoutPage'])

@@ -68,6 +68,14 @@ class GenaralController extends Controller
                     return redirect()->route('marketerDashboard');
                 }
 
+                $hasTrainerSessions = TrainingSession::query()
+                    ->where('trainer_id', $user->id)
+                    ->exists();
+
+                if ($user->hasRole('Trainer') || $hasTrainerSessions) {
+                    return redirect()->route('trainerDashboard');
+                }
+
                 $hasMemberSubscription = Subscription::query()
                     ->where('user_id', $user->id)
                     ->where('is_blocked', false)
@@ -95,6 +103,14 @@ class GenaralController extends Controller
 
         if ($user->hasRole('Admin')) {
             return redirect()->route('adminDashboard');
+        }
+
+        $hasTrainerSessions = TrainingSession::query()
+            ->where('trainer_id', $user->id)
+            ->exists();
+
+        if ($user->hasRole('Trainer') || $hasTrainerSessions) {
+            return redirect()->route('trainerDashboard');
         }
 
         $hasMemberSubscription = Subscription::query()
