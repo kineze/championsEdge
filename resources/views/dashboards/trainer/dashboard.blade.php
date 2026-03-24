@@ -92,6 +92,39 @@
 
     <div class="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
         <div class="border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+            <h2 class="text-sm font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-200">Training Session Totals By Trainer</h2>
+        </div>
+
+        <div class="overflow-x-auto p-4">
+            <table class="min-w-full text-sm">
+                <thead class="bg-slate-50 text-left text-xs uppercase tracking-[0.12em] text-slate-500 dark:bg-slate-800/70 dark:text-slate-300">
+                    <tr>
+                        <th class="px-4 py-3">Trainer</th>
+                        <th class="px-4 py-3">Sessions</th>
+                        <th class="px-4 py-3">Registrations</th>
+                        <th class="px-4 py-3">Revenue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($trainerReports as $report)
+                        <tr class="border-t border-slate-100 dark:border-slate-800">
+                            <td class="px-4 py-3 font-semibold text-slate-800 dark:text-slate-100">{{ $report->trainer_name }}</td>
+                            <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ $report->sessions_count }}</td>
+                            <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ $report->registrations_count }}</td>
+                            <td class="px-4 py-3 text-slate-700 dark:text-slate-200">LKR {{ number_format((float) $report->revenue_total, 2) }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="px-4 py-6 text-center text-slate-500 dark:text-slate-300">No trainer totals available yet.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
+        <div class="border-b border-slate-200 px-4 py-3 dark:border-slate-800">
             <h2 class="text-sm font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-200">Analytics (Last 6 Months)</h2>
         </div>
 

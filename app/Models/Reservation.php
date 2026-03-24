@@ -52,6 +52,11 @@ class Reservation extends Model
         return $this->hasMany(ReservationPayment::class);
     }
 
+    public function extraItems(): HasMany
+    {
+        return $this->hasMany(ReservationExtraItem::class);
+    }
+
     public function refreshPaymentStatus(): void
     {
         $totalPaid = (float) $this->payments()->sum('amount');

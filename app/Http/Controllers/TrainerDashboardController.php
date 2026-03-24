@@ -63,6 +63,18 @@ class TrainerDashboardController extends Controller
             ->limit(8)
             ->get();
 
+        $trainerReports = TrainingSession::query()
+            ->leftJoin('users', 'training_sessions.trainer_id', '=', 'users.id')
+            ->leftJoin('training_session_payments', function ($join) {
+                $join->on('training_sessions.id', '=', 'training_session_payments.training_session_id')
+                    ->whereIn('training_session_payments.status', ['AUTHORIZED', 'CAPTURED']);
+            })
+            ->whereIn('training_sessions.id', $sessionIds)
+            ->groupBy('training_sessions.trainer_id', 'users.name')
+            ->selectRaw('training_sessions.trainer_id, COALESCE(users.name, "Unknown Trainer") as trainer_name, COUNT(DISTINCT training_sessions.id) as sessions_count, COUNT(training_session_payments.id) as registrations_count, COALESCE(SUM(training_session_payments.amount), 0) as revenue_total')
+            ->orderByDesc('registrations_count')
+            ->get();
+
         $monthlyAnalytics = collect();
         for ($i = 5; $i >= 0; $i--) {
             $monthStart = Carbon::now()->subMonthsNoOverflow($i)->startOfMonth();
@@ -95,6 +107,7 @@ class TrainerDashboardController extends Controller
             'monthlyRevenue' => $monthlyRevenue,
             'recentRegistrations' => $recentRegistrations,
             'sessionReports' => $sessionReports,
+            'trainerReports' => $trainerReports,
             'monthlyAnalytics' => $monthlyAnalytics,
         ]);
     }

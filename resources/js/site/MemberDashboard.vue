@@ -11,6 +11,7 @@
           <div>
             <p class="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-300">Member Dashboard</p>
             <h1 class="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white sm:text-4xl">Subscription Overview</h1>
+            <p v-if="member.name" class="mt-2 text-sm font-semibold text-slate-700 dark:text-slate-300">Welcome, {{ member.name }}</p>
             <p class="mt-3 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
               Manage your membership subscription, check remaining days, and renew or cancel when needed.
             </p>
@@ -62,6 +63,34 @@
       </div>
 
       <div class="mt-6 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+        <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/80 lg:col-span-2">
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white">Subscribed Facilities</h2>
+
+          <div v-if="facilityWiseSubscriptions.length === 0" class="mt-4 rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+            No subscribed facilities found.
+          </div>
+
+          <div v-else class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <article
+              v-for="facility in facilityWiseSubscriptions"
+              :key="facility.facility_id"
+              class="rounded-xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-950/60"
+            >
+              <p class="font-semibold text-slate-900 dark:text-white">{{ facility.facility_title }}</p>
+              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Total Subscriptions: {{ facility.subscription_count }}</p>
+              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Latest Plan: {{ facility.latest_plan || '-' }}</p>
+              <p class="mt-2">
+                <span
+                  class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                  :class="facility.has_active_subscription ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'"
+                >
+                  {{ facility.has_active_subscription ? 'Active' : 'Inactive' }}
+                </span>
+              </p>
+            </article>
+          </div>
+        </div>
+
         <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/80">
           <div class="flex items-center justify-between">
             <h2 class="text-xl font-bold text-slate-900 dark:text-white">Current Subscription</h2>
@@ -259,6 +288,10 @@ const loading = ref(false)
 const actionLoading = ref('')
 const renewingSessionId = ref(null)
 const active = ref(null)
+const member = ref({
+  name: '',
+  email: '',
+})
 const history = ref([])
 const purchasedSessions = ref([])
 const availableSessions = ref([])
@@ -285,6 +318,42 @@ const purchasedSessionIds = computed(() => new Set(
     .map((item) => Number(item.training_session_id))
     .filter((id) => Number.isFinite(id))
 ))
+const facilityWiseSubscriptions = computed(() => {
+  const map = new Map()
+
+  ;(Array.isArray(history.value) ? history.value : []).forEach((item) => {
+    const facilityId = Number(item?.facility?.id || 0)
+    const facilityTitle = item?.facility?.title || 'Unknown Facility'
+    const planFrequency = item?.plan?.frequency || '-'
+    const endDate = item?.subscription_end_date ? new Date(item.subscription_end_date) : null
+    const now = new Date()
+    const isActive = !item?.is_blocked && endDate && !Number.isNaN(endDate.getTime()) && endDate >= new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+    if (!map.has(facilityId)) {
+      map.set(facilityId, {
+        facility_id: facilityId,
+        facility_title: facilityTitle,
+        subscription_count: 0,
+        has_active_subscription: false,
+        latest_plan: planFrequency,
+        latest_date: item?.subscription_start_date || '',
+      })
+    }
+
+    const row = map.get(facilityId)
+    row.subscription_count += 1
+    row.has_active_subscription = row.has_active_subscription || Boolean(isActive)
+
+    const rowDate = row.latest_date ? new Date(row.latest_date) : null
+    const currentDate = item?.subscription_start_date ? new Date(item.subscription_start_date) : null
+    if (currentDate && (!rowDate || currentDate > rowDate)) {
+      row.latest_date = item.subscription_start_date
+      row.latest_plan = planFrequency
+    }
+  })
+
+  return Array.from(map.values()).sort((a, b) => a.facility_title.localeCompare(b.facility_title))
+})
 
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('en-LK', {
@@ -324,6 +393,7 @@ const fetchSummary = async () => {
   loading.value = true
   try {
     const { data } = await axios.get('/api/member/subscription/summary')
+    member.value = data.member || member.value
     active.value = data.active_subscription || null
     history.value = Array.isArray(data.subscriptions) ? data.subscriptions : []
     purchasedSessions.value = Array.isArray(data.training_session_purchases) ? data.training_session_purchases : []

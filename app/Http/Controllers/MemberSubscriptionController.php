@@ -188,6 +188,10 @@ class MemberSubscriptionController extends Controller
             ->values();
 
         return response()->json([
+            'member' => [
+                'name' => $user?->name,
+                'email' => $user?->email,
+            ],
             'active_subscription' => $activeSubscription,
             'subscriptions' => $subscriptions,
             'training_session_purchases' => $trainingSessionPurchases,

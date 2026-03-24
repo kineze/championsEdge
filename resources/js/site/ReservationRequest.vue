@@ -233,6 +233,45 @@
             <p v-if="showStep3Error" class="mt-1 text-xs text-red-600">{{ step3Error }}</p>
           </div>
 
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Extra Items</p>
+            <p class="mt-1 text-sm text-slate-600">Add optional items available for this facility.</p>
+
+            <div v-if="availableFacilityExtraItems.length === 0" class="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-500">
+              No extra items configured for this facility.
+            </div>
+
+            <div v-else class="mt-3 space-y-3">
+              <div
+                v-for="item in availableFacilityExtraItems"
+                :key="item.id"
+                class="rounded-xl border border-slate-200 bg-slate-50 p-3"
+              >
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p class="text-sm font-semibold text-slate-800">{{ item.name }}</p>
+                    <p class="text-xs text-slate-500">{{ formatCurrency(item.price_per_unit) }} per {{ item.unit_type }}</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <label :for="`extra_${item.id}`" class="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Units</label>
+                    <input
+                      :id="`extra_${item.id}`"
+                      v-model.number="selectedExtraItemUnits[item.id]"
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      class="w-24 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-800 outline-none ring-cyan-200 focus:border-cyan-500"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                <p v-if="Number(selectedExtraItemUnits[item.id] || 0) > 0" class="mt-2 text-xs text-slate-600">
+                  Line total: <span class="font-semibold">{{ formatCurrency(Number(selectedExtraItemUnits[item.id] || 0) * Number(item.price_per_unit || 0)) }}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div class="flex items-center justify-between gap-2">
             <button type="button" class="rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 transition hover:bg-slate-100" @click="currentStep = 2">Back</button>
             <button type="button" class="rounded-xl bg-cyan-600 px-4 py-2 font-semibold text-white transition hover:bg-cyan-700" @click="goToStep4">Continue</button>
@@ -250,9 +289,20 @@
               <p>Actual Duration: <span class="font-semibold">{{ durationHours.toFixed(2) }} h</span></p>
               <p>Billable Hours: <span class="font-semibold">{{ billableUnits.toFixed(2) }} h</span></p>
               <p>Unit Price: <span class="font-semibold">{{ formatCurrency(unitPrice) }}</span></p>
+              <p>Base Amount: <span class="font-semibold">{{ formatCurrency(baseReservationTotal) }}</span></p>
+              <p>Extra Items Total: <span class="font-semibold">{{ formatCurrency(extraItemsTotal) }}</span></p>
               <p>Total Amount: <span class="font-semibold">{{ formatCurrency(calculatedTotal) }}</span></p>
               <p>Deposit: <span class="font-semibold">{{ formatCurrency(computedDepositAmount) }}</span></p>
               <p>Remaining Balance: <span class="font-semibold">{{ formatCurrency(remainingBalance) }}</span></p>
+            </div>
+
+            <div v-if="selectedExtraItems.length" class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Selected Extra Items</p>
+              <ul class="mt-2 space-y-1 text-sm text-slate-700">
+                <li v-for="item in selectedExtraItems" :key="item.facility_extra_item_id">
+                  {{ item.name }} ({{ item.units }} {{ item.unit_type }}) - {{ formatCurrency(item.line_total) }}
+                </li>
+              </ul>
             </div>
           </div>
 
@@ -283,6 +333,7 @@
               <p>Phone: <span class="font-semibold">{{ lastReservation.phone }}</span></p>
               <p>Email: <span class="font-semibold">{{ lastReservation.email || '-' }}</span></p>
               <p>Deposit: <span class="font-semibold">{{ formatCurrency(lastReservation.deposit_amount) }}</span></p>
+              <p>Extra Items Total: <span class="font-semibold">{{ formatCurrency(extraItemsTotal) }}</span></p>
               <p>Total Amount: <span class="font-semibold">{{ formatCurrency(lastReservation.reservation_amount) }}</span></p>
             </div>
           </div>
@@ -321,6 +372,7 @@ const checkingAvailability = ref(false)
 const facilities = ref([])
 const pricePlans = ref([])
 const workingHours = ref([])
+const facilityExtraItems = ref([])
 const currentStep = ref(1)
 const availabilityState = ref('idle')
 const availabilitySuggestions = ref([])
@@ -358,6 +410,7 @@ const form = ref({
   start_at: '',
   end_at: '',
 })
+const selectedExtraItemUnits = ref({})
 
 const touchField = (field) => {
   touched.value[field] = true
@@ -381,6 +434,11 @@ const selectedFacilityTitle = computed(() => {
 const facilityPlans = computed(() => {
   if (!form.value.facility_id) return []
   return pricePlans.value.filter((plan) => Number(plan.facility_id) === Number(form.value.facility_id))
+})
+
+const availableFacilityExtraItems = computed(() => {
+  if (!form.value.facility_id) return []
+  return facilityExtraItems.value.filter((item) => Number(item.facility_id) === Number(form.value.facility_id))
 })
 
 const selectedPlan = computed(() => {
@@ -507,7 +565,30 @@ const billableUnits = computed(() => {
 })
 
 const unitPrice = computed(() => Number(selectedPlan.value?.price || 0))
-const calculatedTotal = computed(() => billableUnits.value * unitPrice.value)
+const baseReservationTotal = computed(() => billableUnits.value * unitPrice.value)
+const selectedExtraItems = computed(() => {
+  return availableFacilityExtraItems.value
+    .map((item) => {
+      const units = Number(selectedExtraItemUnits.value[item.id] || 0)
+      if (units <= 0) return null
+
+      const pricePerUnit = Number(item.price_per_unit || 0)
+      return {
+        facility_extra_item_id: Number(item.id),
+        facility_id: Number(item.facility_id),
+        name: item.name,
+        price_per_unit: pricePerUnit,
+        unit_type: item.unit_type,
+        units,
+        line_total: Number((units * pricePerUnit).toFixed(2)),
+      }
+    })
+    .filter(Boolean)
+})
+const extraItemsTotal = computed(() => {
+  return selectedExtraItems.value.reduce((total, item) => total + Number(item.line_total || 0), 0)
+})
+const calculatedTotal = computed(() => baseReservationTotal.value + extraItemsTotal.value)
 const computedDepositAmount = computed(() => {
   if (!selectedPlan.value?.is_deposit_required) return 0
   return Number(selectedPlan.value.deposit_amount || 0)
@@ -553,6 +634,7 @@ const fetchMeta = async () => {
     facilities.value = Array.isArray(res.data.facilities) ? res.data.facilities : []
     pricePlans.value = Array.isArray(res.data.price_plans) ? res.data.price_plans : []
     workingHours.value = Array.isArray(res.data.working_hours) ? res.data.working_hours : []
+    facilityExtraItems.value = Array.isArray(res.data.facility_extra_items) ? res.data.facility_extra_items : []
 
     if (res.data.user?.id) {
       form.value.user_id = res.data.user.id
@@ -701,6 +783,10 @@ const submitReservation = async () => {
       email: form.value.email || null,
       deposit_amount: Number(computedDepositAmount.value || 0),
       reservation_amount: Number(calculatedTotal.value || 0),
+      extra_items: selectedExtraItems.value.map((item) => ({
+        facility_extra_item_id: Number(item.facility_extra_item_id),
+        units: Number(item.units),
+      })),
     })
 
     const checkoutUrl = res.data?.payment?.checkout_url
@@ -748,6 +834,7 @@ const startNewRequest = () => {
     start_at: '',
     end_at: '',
   }
+  selectedExtraItemUnits.value = {}
 
   touched.value = {
     facility_id: false,
@@ -788,6 +875,7 @@ watch(
     accessNotice.value = []
     availabilitySuggestions.value = []
     selectedSuggestion.value = null
+    selectedExtraItemUnits.value = {}
   }
 )
 

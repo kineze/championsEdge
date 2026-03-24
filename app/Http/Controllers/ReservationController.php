@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\BankDetail;
 use App\Models\Facility;
+use App\Models\FacilityExtraItem;
 use App\Models\Reservation;
+use App\Models\ReservationExtraItem;
 use App\Models\ReservationGatewayPayment;
 use App\Models\ReservationPayment;
 use App\Models\ReservationPrice;
@@ -70,6 +72,10 @@ class ReservationController extends Controller
                     ->values()
                     ->all()
             ),
+            'facility_extra_items' => FacilityExtraItem::query()
+                ->orderBy('facility_id')
+                ->orderBy('name')
+                ->get(['id', 'facility_id', 'name', 'price_per_unit', 'unit_type']),
         ]);
     }
 
@@ -188,10 +194,7 @@ class ReservationController extends Controller
             'deposit_amount' => 'nullable|numeric|min:0',
             'reservation_amount' => 'nullable|numeric|min:0',
             'extra_items' => 'nullable|array',
-            'extra_items.*.facility_id' => 'required|integer|exists:facilities,id',
-            'extra_items.*.name' => 'required|string|max:255',
-            'extra_items.*.price_per_unit' => 'required|numeric|min:0',
-            'extra_items.*.unit_type' => 'required|string|max:50',
+            'extra_items.*.facility_extra_item_id' => 'required|integer|exists:facility_extra_items,id',
             'extra_items.*.units' => 'required|numeric|min:0.01',
         ]);
 
@@ -257,6 +260,7 @@ class ReservationController extends Controller
             'reservation_amount' => $calculatedTotal,
             'status' => 'draft',
         ]);
+        $this->createReservationExtraItems($reservation, $extraItems);
 
         $recipientEmail = $validated['email'] ?? $request->user()?->email;
         $recipientName = $validated['name'] ?? $request->user()?->name ?? 'Customer';
@@ -296,7 +300,7 @@ class ReservationController extends Controller
                 'deposit_amount' => round((float) $depositAmount, 2),
                 'remaining_balance' => round(max(0, (float) $calculatedTotal - (float) $depositAmount), 2),
             ],
-            'reservation' => $reservation->load(['user.profile', 'facility', 'pricePlan']),
+            'reservation' => $reservation->load(['user.profile', 'facility', 'pricePlan', 'extraItems']),
         ], 201);
     }
 
@@ -314,10 +318,7 @@ class ReservationController extends Controller
             'deposit_amount' => 'nullable|numeric|min:0',
             'reservation_amount' => 'nullable|numeric|min:0',
             'extra_items' => 'nullable|array',
-            'extra_items.*.facility_id' => 'required|integer|exists:facilities,id',
-            'extra_items.*.name' => 'required|string|max:255',
-            'extra_items.*.price_per_unit' => 'required|numeric|min:0',
-            'extra_items.*.unit_type' => 'required|string|max:50',
+            'extra_items.*.facility_extra_item_id' => 'required|integer|exists:facility_extra_items,id',
             'extra_items.*.units' => 'required|numeric|min:0.01',
         ]);
 
@@ -383,6 +384,7 @@ class ReservationController extends Controller
             'reservation_amount' => $calculatedTotal,
             'status' => 'draft',
         ]);
+        $this->createReservationExtraItems($reservation, $extraItems);
 
         $recipientEmail = $validated['email'] ?? $request->user()?->email;
         $recipientName = $validated['name'] ?? $request->user()?->name ?? 'Customer';
@@ -423,7 +425,7 @@ class ReservationController extends Controller
                     'remaining_balance' => round((float) $calculatedTotal, 2),
                 ],
                 'payment' => null,
-                'reservation' => $reservation->load(['user.profile', 'facility', 'pricePlan']),
+                'reservation' => $reservation->load(['user.profile', 'facility', 'pricePlan', 'extraItems']),
             ], 201);
         }
 
@@ -479,7 +481,7 @@ class ReservationController extends Controller
                 'checkout_url' => route('reservation.payment.seylan.checkout', ['reservationGatewayPayment' => $payment->id]),
                 'payment_id' => $payment->id,
             ],
-            'reservation' => $reservation->load(['user.profile', 'facility', 'pricePlan']),
+            'reservation' => $reservation->load(['user.profile', 'facility', 'pricePlan', 'extraItems']),
         ], 201);
     }
 
@@ -885,21 +887,42 @@ class ReservationController extends Controller
     private function normalizeExtraItems(array $extraItems, int $facilityId): array
     {
         $normalized = [];
+        $extraItemIds = collect($extraItems)
+            ->pluck('facility_extra_item_id')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+
+        $facilityExtraItems = FacilityExtraItem::query()
+            ->whereIn('id', $extraItemIds)
+            ->get()
+            ->keyBy('id');
 
         foreach ($extraItems as $item) {
-            $itemFacilityId = (int) ($item['facility_id'] ?? 0);
-            if ($itemFacilityId !== $facilityId) {
+            $facilityExtraItemId = (int) ($item['facility_extra_item_id'] ?? 0);
+            $facilityExtraItem = $facilityExtraItems->get($facilityExtraItemId);
+
+            if (!$facilityExtraItem || (int) $facilityExtraItem->facility_id !== $facilityId) {
                 throw ValidationException::withMessages([
                     'extra_items' => ['Each extra item must belong to the selected facility.'],
                 ]);
             }
 
+            $units = round((float) ($item['units'] ?? 0), 2);
+            if ($units <= 0) {
+                continue;
+            }
+
+            $pricePerUnit = round((float) $facilityExtraItem->price_per_unit, 2);
             $normalized[] = [
-                'facility_id' => $itemFacilityId,
-                'name' => trim((string) ($item['name'] ?? '')),
-                'price_per_unit' => round((float) ($item['price_per_unit'] ?? 0), 2),
-                'unit_type' => trim((string) ($item['unit_type'] ?? '')),
-                'units' => round((float) ($item['units'] ?? 0), 2),
+                'facility_id' => (int) $facilityExtraItem->facility_id,
+                'facility_extra_item_id' => (int) $facilityExtraItem->id,
+                'name' => trim((string) $facilityExtraItem->name),
+                'price_per_unit' => $pricePerUnit,
+                'unit_type' => trim((string) $facilityExtraItem->unit_type),
+                'units' => $units,
+                'line_total' => round($pricePerUnit * $units, 2),
             ];
         }
 
@@ -910,10 +933,36 @@ class ReservationController extends Controller
     {
         $total = 0.0;
         foreach ($extraItems as $item) {
-            $total += ((float) ($item['price_per_unit'] ?? 0)) * ((float) ($item['units'] ?? 0));
+            $lineTotal = (float) ($item['line_total'] ?? 0);
+            if ($lineTotal <= 0) {
+                $lineTotal = ((float) ($item['price_per_unit'] ?? 0)) * ((float) ($item['units'] ?? 0));
+            }
+
+            $total += $lineTotal;
         }
 
         return round($total, 2);
+    }
+
+    private function createReservationExtraItems(Reservation $reservation, array $extraItems): void
+    {
+        if (count($extraItems) === 0) {
+            return;
+        }
+
+        $payload = array_map(fn (array $item) => [
+            'reservation_id' => $reservation->id,
+            'facility_extra_item_id' => (int) ($item['facility_extra_item_id'] ?? 0) ?: null,
+            'name' => (string) ($item['name'] ?? ''),
+            'price_per_unit' => round((float) ($item['price_per_unit'] ?? 0), 2),
+            'unit_type' => (string) ($item['unit_type'] ?? ''),
+            'units' => round((float) ($item['units'] ?? 0), 2),
+            'line_total' => round((float) ($item['line_total'] ?? 0), 2),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ], $extraItems);
+
+        ReservationExtraItem::query()->insert($payload);
     }
 
     private function sortByWeekDay(array $hours): array
@@ -936,6 +985,7 @@ class ReservationController extends Controller
             'facility:id,title',
             'pricePlan:id,range_type,price,facility_id',
             'user:id,name,email',
+            'extraItems:id,reservation_id,facility_extra_item_id,name,price_per_unit,unit_type,units,line_total',
             'payments:id,reservation_id,payment_date,payment_method,amount,currency,reference_no,recorded_by,created_at',
         ])
             ->latest();
@@ -971,6 +1021,7 @@ class ReservationController extends Controller
                 'facility:id,title',
                 'pricePlan:id,range_type,price,facility_id',
                 'user:id,name,email',
+                'extraItems:id,reservation_id,facility_extra_item_id,name,price_per_unit,unit_type,units,line_total',
                 'payments:id,reservation_id,payment_date,payment_method,amount,currency,reference_no,recorded_by,created_at',
             ]),
         ]);
@@ -1032,6 +1083,7 @@ class ReservationController extends Controller
                 'facility:id,title',
                 'pricePlan:id,range_type,price,facility_id',
                 'user:id,name,email',
+                'extraItems:id,reservation_id,facility_extra_item_id,name,price_per_unit,unit_type,units,line_total',
                 'payments:id,reservation_id,payment_date,payment_method,amount,currency,reference_no,recorded_by,created_at',
             ])
             ->whereIn('status', ['reserved', 'active'])
@@ -1104,6 +1156,7 @@ class ReservationController extends Controller
                 'facility:id,title',
                 'pricePlan:id,range_type,price,facility_id',
                 'user:id,name,email',
+                'extraItems:id,reservation_id,facility_extra_item_id,name,price_per_unit,unit_type,units,line_total',
                 'payments:id,reservation_id,payment_date,payment_method,amount,currency,reference_no,recorded_by,created_at',
             ]),
         ], 201);

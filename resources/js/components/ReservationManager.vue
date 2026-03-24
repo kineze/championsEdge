@@ -35,6 +35,7 @@
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Name</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Facility</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Start</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Extras</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Status</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Payment</th>
                 <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Actions</th>
@@ -42,15 +43,21 @@
             </thead>
             <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-950/50">
               <tr v-if="loading">
-                <td colspan="6" class="px-4 py-6 text-center text-sm text-slate-500">Loading reservation requests...</td>
+                <td colspan="7" class="px-4 py-6 text-center text-sm text-slate-500">Loading reservation requests...</td>
               </tr>
               <tr v-else-if="reservations.length === 0">
-                <td colspan="6" class="px-4 py-6 text-center text-sm text-slate-500">No reservation requests found.</td>
+                <td colspan="7" class="px-4 py-6 text-center text-sm text-slate-500">No reservation requests found.</td>
               </tr>
               <tr v-for="reservation in reservations" :key="reservation.id" class="hover:bg-slate-50/70 dark:hover:bg-slate-900/40">
                 <td class="px-4 py-3 text-slate-800 dark:text-slate-100">{{ reservation.name }}</td>
                 <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ reservation.facility?.title || '-' }}</td>
                 <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ formatDateTime(reservation.day_range?.start_at) }}</td>
+                <td class="px-4 py-3 text-slate-700 dark:text-slate-200">
+                  <span v-if="extraItemsCount(reservation) > 0">
+                    {{ extraItemsCount(reservation) }} item(s) · {{ formatCurrency(extraItemsTotal(reservation)) }}
+                  </span>
+                  <span v-else>-</span>
+                </td>
                 <td class="px-4 py-3">
                   <span class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold" :class="statusClass(reservation.status)">
                     {{ reservation.status }}
@@ -125,6 +132,7 @@
               <tr>
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Name</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Facility</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Extras</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Total</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Paid</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Balance</th>
@@ -134,14 +142,20 @@
             </thead>
             <tbody class="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-950/50">
               <tr v-if="approvedLoading">
-                <td colspan="7" class="px-4 py-6 text-center text-sm text-slate-500">Loading approved reservations...</td>
+                <td colspan="8" class="px-4 py-6 text-center text-sm text-slate-500">Loading approved reservations...</td>
               </tr>
               <tr v-else-if="approvedReservations.length === 0">
-                <td colspan="7" class="px-4 py-6 text-center text-sm text-slate-500">No approved reservations found.</td>
+                <td colspan="8" class="px-4 py-6 text-center text-sm text-slate-500">No approved reservations found.</td>
               </tr>
               <tr v-for="reservation in approvedReservations" :key="`approved_${reservation.id}`" class="hover:bg-slate-50/70 dark:hover:bg-slate-900/40">
                 <td class="px-4 py-3 text-slate-800 dark:text-slate-100">{{ reservation.name }}</td>
                 <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ reservation.facility?.title || '-' }}</td>
+                <td class="px-4 py-3 text-slate-700 dark:text-slate-200">
+                  <span v-if="extraItemsCount(reservation) > 0">
+                    {{ extraItemsCount(reservation) }} item(s) · {{ formatCurrency(extraItemsTotal(reservation)) }}
+                  </span>
+                  <span v-else>-</span>
+                </td>
                 <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ formatCurrency(normalizedTotal(reservation)) }}</td>
                 <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ formatCurrency(reservation.paid_amount) }}</td>
                 <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ formatCurrency(remainingBalance(reservation)) }}</td>
@@ -151,13 +165,22 @@
                   </span>
                 </td>
                 <td class="px-4 py-3 text-right">
-                  <button
-                    class="rounded-lg bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
-                    :disabled="String(reservation.payment_status || '').toLowerCase() === 'paid'"
-                    @click="openPaymentModal(reservation)"
-                  >
-                    Add Payment
-                  </button>
+                  <div class="inline-flex items-center gap-2">
+                    <button
+                      class="inline-grid h-8 w-8 place-items-center rounded-lg text-slate-500 transition hover:bg-cyan-500/10 hover:text-cyan-700 dark:text-slate-300"
+                      title="View"
+                      @click="openDetails(reservation)"
+                    >
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button
+                      class="rounded-lg bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      :disabled="String(reservation.payment_status || '').toLowerCase() === 'paid'"
+                      @click="openPaymentModal(reservation)"
+                    >
+                      Add Payment
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -239,6 +262,30 @@
               <dd class="mt-0.5 text-slate-800 dark:text-slate-100">{{ formatCurrency(remainingBalance(selectedReservation)) }}</dd>
             </div>
           </dl>
+
+          <div class="mt-4">
+            <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Purchased Extra Items</h4>
+            <div v-if="extraItemsFor(selectedReservation).length === 0" class="mt-2 rounded-lg border border-dashed border-slate-300 px-3 py-3 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+              No extra items selected.
+            </div>
+            <div v-else class="mt-2 space-y-2">
+              <div
+                v-for="item in extraItemsFor(selectedReservation)"
+                :key="item.id || `${item.name}_${item.units}`"
+                class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-950/40"
+              >
+                <p class="font-semibold text-slate-800 dark:text-slate-100">
+                  {{ item.name }} · {{ item.units }} {{ item.unit_type }}
+                </p>
+                <p class="text-slate-500 dark:text-slate-400">
+                  {{ formatCurrency(item.price_per_unit) }} per {{ item.unit_type }} · Line total: {{ formatCurrency(item.line_total) }}
+                </p>
+              </div>
+              <div class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                Extras Total: {{ formatCurrency(extraItemsTotal(selectedReservation)) }}
+              </div>
+            </div>
+          </div>
 
           <div class="mt-4">
             <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Payment History</h4>
@@ -432,6 +479,25 @@ const paymentStatusClass = (status) => {
   if (value === 'paid') return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
   if (value === 'partially_paid') return 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
   return 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
+}
+
+const extraItemsFor = (reservation) => {
+  if (Array.isArray(reservation?.extra_items)) return reservation.extra_items
+  if (Array.isArray(reservation?.extraItems)) return reservation.extraItems
+  return []
+}
+
+const extraItemsCount = (reservation) => {
+  return extraItemsFor(reservation).length
+}
+
+const extraItemsTotal = (reservation) => {
+  return extraItemsFor(reservation).reduce((total, item) => {
+    const lineTotal = Number(item?.line_total || 0)
+    if (lineTotal > 0) return total + lineTotal
+
+    return total + (Number(item?.price_per_unit || 0) * Number(item?.units || 0))
+  }, 0)
 }
 
 const normalizedTotal = (reservation) => {
