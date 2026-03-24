@@ -21,7 +21,7 @@
           <a href="mailto:info@championsedge.com" class="transition hover:text-cyan-300">info@championsedge.com</a>
           <a v-if="isAuthenticated" href="/member/dashboard" class="font-semibold transition hover:text-cyan-300">Member Dashboard</a>
           <a v-if="!isAuthenticated" href="/member/login" class="font-semibold transition hover:text-cyan-300">Login</a>
-          <a v-if="!isAuthenticated" href="/member/register" class="font-semibold transition hover:text-cyan-300">Register</a>
+          <a v-if="!isAuthenticated" href="/member/register/account" class="font-semibold transition hover:text-cyan-300">Register</a>
         </div>
       </div>
     </div>
@@ -153,7 +153,7 @@
         <p v-if="!isAuthenticated" class="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-300">Account</p>
         <div v-if="!isAuthenticated" class="grid grid-cols-2 gap-2">
           <a href="/member/login" class="rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-3 py-2 text-center text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/20" @click="mobileOpen = false">Login</a>
-          <a href="/member/register" class="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-white/20" @click="mobileOpen = false">Register</a>
+          <a href="/member/register/account" class="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-white/20" @click="mobileOpen = false">Register</a>
         </div>
       </div>
     </aside>

@@ -15,13 +15,21 @@
               Manage your membership subscription, check remaining days, and renew or cancel when needed.
             </p>
           </div>
-          <button
-            type="button"
-            class="rounded-xl border border-slate-300 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-            @click="logout"
-          >
-            Logout
-          </button>
+          <div class="flex items-center gap-2">
+            <a
+              href="/member/register"
+              class="rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700"
+            >
+              Buy Subscription
+            </a>
+            <button
+              type="button"
+              class="rounded-xl border border-slate-300 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              @click="logout"
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
         <div class="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -60,6 +68,11 @@
 
           <div v-else-if="!active" class="mt-4 rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
             No subscription found.
+            <div class="mt-4">
+              <a href="/member/register" class="rounded-xl bg-cyan-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-cyan-700">
+                Buy Subscription
+              </a>
+            </div>
           </div>
 
           <div v-else class="mt-4 space-y-4">
@@ -94,6 +107,17 @@
         </div>
 
         <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/80">
+          <div
+            v-if="!hasActiveSubscription"
+            class="mb-4 rounded-xl border border-cyan-300 bg-cyan-50 p-4 text-sm text-cyan-900 dark:border-cyan-500/40 dark:bg-cyan-500/10 dark:text-cyan-200"
+          >
+            <p class="font-semibold">You do not have an active subscription.</p>
+            <p class="mt-1">Purchase a subscription to access member facilities.</p>
+            <a href="/member/register" class="mt-3 inline-flex rounded-lg bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cyan-700">
+              Buy Subscription
+            </a>
+          </div>
+
           <h2 class="text-xl font-bold text-slate-900 dark:text-white">Subscription History</h2>
 
           <div v-if="history.length === 0" class="mt-4 rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
@@ -154,6 +178,66 @@
             </article>
           </div>
         </div>
+
+        <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/80 lg:col-span-2">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Available Training Sessions</h2>
+            <button
+              type="button"
+              class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              @click="fetchAvailableTrainingSessions"
+            >
+              Refresh
+            </button>
+          </div>
+
+          <div v-if="loadingAvailableSessions" class="mt-4 rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+            Loading available training sessions...
+          </div>
+
+          <div v-else-if="availableSessions.length === 0" class="mt-4 rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+            No training sessions available right now.
+          </div>
+
+          <div v-else class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <article
+              v-for="session in availableSessions"
+              :key="session.id"
+              class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950/60"
+            >
+              <img
+                :src="sessionImage(session)"
+                :alt="session.session_title || 'Training session'"
+                class="h-36 w-full object-cover"
+              />
+              <div class="p-3 text-sm">
+                <p class="font-semibold text-slate-900 dark:text-white">{{ session.session_title || '-' }}</p>
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {{ session.facility?.title || '-' }} · Trainer: {{ session.trainer?.name || '-' }}
+                </p>
+                <div class="mt-2 flex items-center justify-between">
+                  <p class="text-sm font-bold text-cyan-700">{{ formatCurrency(session.amount) }}</p>
+                  <p class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ session.frequency || 'monthly' }}</p>
+                </div>
+                <div class="mt-3">
+                  <span
+                    v-if="isPurchasedSession(session.id)"
+                    class="inline-flex rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300"
+                  >
+                    Purchased
+                  </span>
+                  <a
+                    v-else
+                    :href="`/training-sessions/${session.id}/purchase`"
+                    class="inline-flex rounded-lg bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cyan-700"
+                  >
+                    Purchase Session
+                  </a>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -171,6 +255,8 @@ const renewingSessionId = ref(null)
 const active = ref(null)
 const history = ref([])
 const purchasedSessions = ref([])
+const availableSessions = ref([])
+const loadingAvailableSessions = ref(false)
 const stats = ref({
   total_subscriptions: 0,
   active_subscriptions: 0,
@@ -186,6 +272,13 @@ const remainingDays = computed(() => {
   const diff = Math.ceil((new Date(end.getFullYear(), end.getMonth(), end.getDate()) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / oneDay)
   return diff > 0 ? diff : 0
 })
+
+const hasActiveSubscription = computed(() => Number(stats.value?.active_subscriptions || 0) > 0)
+const purchasedSessionIds = computed(() => new Set(
+  (Array.isArray(purchasedSessions.value) ? purchasedSessions.value : [])
+    .map((item) => Number(item.training_session_id))
+    .filter((id) => Number.isFinite(id))
+))
 
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('en-LK', {
@@ -210,6 +303,17 @@ const formatDateTime = (value) => {
   return date.toLocaleString()
 }
 
+const sessionImage = (session) => {
+  if (!session) return '/images/slide1.jpg'
+  if (session.display_image_url) return session.display_image_url
+  const image = session.display_image
+  if (!image) return '/images/slide1.jpg'
+  if (String(image).startsWith('http')) return image
+  return `/storage/${image}`
+}
+
+const isPurchasedSession = (sessionId) => purchasedSessionIds.value.has(Number(sessionId))
+
 const fetchSummary = async () => {
   loading.value = true
   try {
@@ -225,17 +329,33 @@ const fetchSummary = async () => {
   }
 }
 
+const fetchAvailableTrainingSessions = async () => {
+  loadingAvailableSessions.value = true
+  try {
+    const { data } = await axios.get('/api/public/training-sessions')
+    availableSessions.value = Array.isArray(data?.training_sessions) ? data.training_sessions : []
+  } catch {
+    availableSessions.value = []
+    toast.error('Failed to load available training sessions.')
+  } finally {
+    loadingAvailableSessions.value = false
+  }
+}
+
 const renew = async () => {
   if (!active.value?.id) return
   if (!window.confirm('Renew this subscription now?')) return
 
   actionLoading.value = 'renew'
   try {
-    await axios.post(`/api/member/subscription/${active.value.id}/renew`)
-    toast.success('Subscription renewed successfully.')
-    await fetchSummary()
+    const { data } = await axios.post(`/api/member/subscription/${active.value.id}/renew`)
+    const checkoutUrl = data?.payment?.checkout_url
+    if (!checkoutUrl) {
+      throw new Error('Missing checkout URL')
+    }
+    window.location.href = checkoutUrl
   } catch (error) {
-    toast.error(error?.response?.data?.message || 'Failed to renew subscription.')
+    toast.error(error?.response?.data?.message || 'Failed to initialize renewal payment.')
   } finally {
     actionLoading.value = ''
   }
@@ -285,5 +405,7 @@ const logout = async () => {
   }
 }
 
-onMounted(fetchSummary)
+onMounted(async () => {
+  await Promise.all([fetchSummary(), fetchAvailableTrainingSessions()])
+})
 </script>

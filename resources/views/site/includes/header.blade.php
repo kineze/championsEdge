@@ -19,7 +19,7 @@
             <div class="flex items-center gap-4 text-xs text-slate-200 sm:text-sm">
                 <a href="mailto:info@championsedge.com" class="hidden transition hover:text-cyan-300 sm:inline">info@championsedge.com</a>
                 <a href="/login" class="font-semibold transition hover:text-cyan-300">Login</a>
-                <a href="/register" class="font-semibold transition hover:text-cyan-300">Register</a>
+                <a href="/member/register/account" class="font-semibold transition hover:text-cyan-300">Register</a>
             </div>
         </div>
     </div>

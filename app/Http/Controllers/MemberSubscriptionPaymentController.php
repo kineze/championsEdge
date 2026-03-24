@@ -54,7 +54,7 @@ class MemberSubscriptionPaymentController extends Controller
         try {
             $orderResponse = $gateway->retrieveOrder($gatewayOrderId);
         } catch (\Throwable $e) {
-            Log::error('Member subscription reactivation verify failed', [
+            Log::error('Member subscription payment verify failed', [
                 'gateway_order_id' => $gatewayOrderId,
                 'error' => $e->getMessage(),
             ]);
@@ -74,7 +74,7 @@ class MemberSubscriptionPaymentController extends Controller
             return redirect()->route('memberDashboard')->with('error', 'Payment was declined by bank.');
         }
 
-        $this->finalizeReactivation($payment->subscription);
+        $this->finalizeSubscriptionPayment($payment);
 
         $successUrl = URL::temporarySignedRoute(
             'member.subscription.payment.success',
@@ -103,16 +103,43 @@ class MemberSubscriptionPaymentController extends Controller
         ]);
     }
 
-    private function finalizeReactivation(?Subscription $subscription): void
+    private function finalizeSubscriptionPayment(MemberSubscriptionPayment $payment): void
     {
+        $subscription = $payment->subscription;
+
         if (!$subscription) {
             return;
         }
 
         $subscription->loadMissing('plan:id,frequency');
+        $today = Carbon::today();
+        $isYearly = $subscription->plan && $subscription->plan->frequency === 'yearly';
+        $paymentAction = strtolower((string) $payment->payment_action);
 
-        $startDate = Carbon::today();
-        $endDate = $subscription->plan && $subscription->plan->frequency === 'yearly'
+        if ($paymentAction === 'renew') {
+            $baseDate = $subscription->subscription_end_date
+                ? Carbon::parse($subscription->subscription_end_date)
+                : $today->copy();
+
+            if ($baseDate->lessThan($today)) {
+                $baseDate = $today->copy();
+            }
+
+            $endDate = $isYearly
+                ? $baseDate->copy()->addYear()
+                : $baseDate->copy()->addMonth();
+
+            $subscription->update([
+                'subscription_end_date' => $endDate->toDateString(),
+                'payment_method' => 'online',
+                'is_blocked' => false,
+            ]);
+
+            return;
+        }
+
+        $startDate = $today->copy();
+        $endDate = $isYearly
             ? $startDate->copy()->addYear()
             : $startDate->copy()->addMonth();
 

@@ -97,6 +97,8 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/member/subscription/summary', [MemberSubscriptionController::class, 'summary']);
+    Route::get('/member/subscription/purchase-meta', [MemberSubscriptionController::class, 'purchaseMeta']);
+    Route::post('/member/subscription/initiate-purchase', [MemberSubscriptionController::class, 'initiatePurchase']);
     Route::post('/member/subscription/{subscription}/renew', [MemberSubscriptionController::class, 'renew']);
     Route::post('/member/subscription/{subscription}/cancel', [MemberSubscriptionController::class, 'cancel']);
     Route::post('/member/subscription/{subscription}/reactivate-payment', [MemberSubscriptionController::class, 'initiateReactivationPayment']);

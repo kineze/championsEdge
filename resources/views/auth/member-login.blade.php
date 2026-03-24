@@ -153,7 +153,7 @@
                     <div class="pt-1 text-center">
                         <p class="text-xs text-slate-300">
                             Need an account?
-                            <a href="{{ route('member.register') }}" class="font-semibold text-cyan-300 transition hover:text-cyan-200">Create Member Account</a>
+                            <a href="{{ route('member.account.register') }}" class="font-semibold text-cyan-300 transition hover:text-cyan-200">Create Member Account</a>
                         </p>
                     </div>
                 </form>

@@ -16,7 +16,7 @@ class TrainingSessionPurchaseController extends Controller
     public function page(Request $request, TrainingSession $trainingSession)
     {
         if (!$request->user()) {
-            return redirect()->route('member.login')
+            return redirect()->guest(route('member.login'))
                 ->with('error', 'Please login to continue.');
         }
 
@@ -170,9 +170,13 @@ class TrainingSessionPurchaseController extends Controller
 
     public function checkoutPage(Request $request, TrainingSessionPayment $trainingSessionPayment, SeylanGateway $gateway)
     {
-        if ((int) $trainingSessionPayment->user_id !== (int) optional($request->user())->id) {
-            return redirect()->route('member.login')
+        if (!$request->user()) {
+            return redirect()->guest(route('member.login'))
                 ->with('error', 'Please login to continue your training session payment.');
+        }
+
+        if ((int) $trainingSessionPayment->user_id !== (int) $request->user()->id) {
+            abort(403, 'Unauthorized training session payment.');
         }
 
         if (!$trainingSessionPayment->session_id) {

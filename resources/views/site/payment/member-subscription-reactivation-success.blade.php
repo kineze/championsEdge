@@ -9,10 +9,10 @@
 
   <div class="relative mx-auto max-w-3xl px-6">
     <div class="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl dark:border-slate-700 dark:bg-slate-900">
-      <p class="text-xs font-semibold uppercase tracking-[0.15em] text-emerald-700 dark:text-emerald-300">Subscription Reactivated</p>
+      <p class="text-xs font-semibold uppercase tracking-[0.15em] text-emerald-700 dark:text-emerald-300">Subscription Payment</p>
       <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">Payment Successful</h1>
       <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">
-        Your cancelled subscription has been reactivated and is now active.
+        Your subscription payment was completed and your subscription is now active.
       </p>
 
       <div class="mt-6 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-700 dark:bg-slate-950/60">

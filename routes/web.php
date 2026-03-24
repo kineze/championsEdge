@@ -7,6 +7,7 @@ use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\GenaralController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MemberDashboardController;
+use App\Http\Controllers\MemberAccountRegistrationController;
 use App\Http\Controllers\MemberRegistrationController;
 use App\Http\Controllers\MemberRegistrationPaymentController;
 use App\Http\Controllers\MemberSubscriptionPaymentController;
@@ -35,8 +36,15 @@ Route::view('/member/login', 'auth.member-login')
     ->middleware('guest')
     ->name('member.login');
 
-Route::get('/member/register', [MemberRegistrationController::class, 'page'])
+Route::get('/member/register/account', [MemberAccountRegistrationController::class, 'create'])
     ->middleware('guest')
+    ->name('member.account.register');
+Route::post('/member/register/account', [MemberAccountRegistrationController::class, 'store'])
+    ->middleware('guest')
+    ->name('member.account.register.store');
+
+Route::get('/member/register', [MemberRegistrationController::class, 'page'])
+    ->middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])
     ->name('member.register');
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
