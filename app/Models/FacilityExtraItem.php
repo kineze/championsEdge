@@ -9,6 +9,7 @@ class FacilityExtraItem extends Model
 {
     protected $fillable = [
         'facility_id',
+        'inventory_id',
         'name',
         'price_per_unit',
         'unit_type',
@@ -21,5 +22,10 @@ class FacilityExtraItem extends Model
     public function facility(): BelongsTo
     {
         return $this->belongsTo(Facility::class);
+    }
+
+    public function inventory(): BelongsTo
+    {
+        return $this->belongsTo(Inventory::class);
     }
 }

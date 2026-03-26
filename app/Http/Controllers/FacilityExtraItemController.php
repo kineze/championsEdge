@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Facility;
 use App\Models\FacilityExtraItem;
+use App\Models\Inventory;
 use Illuminate\Http\Request;
 
 class FacilityExtraItemController extends Controller
@@ -11,7 +12,7 @@ class FacilityExtraItemController extends Controller
     public function index(Facility $facility)
     {
         return response()->json([
-            'extra_items' => $facility->extraItems()->latest()->get(),
+            'extra_items' => $facility->extraItems()->with('inventory')->latest()->get(),
         ]);
     }
 
@@ -22,23 +23,30 @@ class FacilityExtraItemController extends Controller
         }
 
         return response()->json([
-            'extra_item' => $facilityExtraItem->load('facility'),
+            'extra_item' => $facilityExtraItem->load(['facility', 'inventory']),
         ]);
     }
 
     public function store(Request $request, Facility $facility)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'inventory_id' => 'required|exists:inventories,id',
             'price_per_unit' => 'required|numeric|min:0',
             'unit_type' => 'required|string|max:50',
         ]);
 
-        $item = $facility->extraItems()->create($validated);
+        $inventory = Inventory::findOrFail($validated['inventory_id']);
+
+        $item = $facility->extraItems()->create([
+            'inventory_id' => $inventory->id,
+            'name' => $inventory->item_name,
+            'price_per_unit' => $validated['price_per_unit'],
+            'unit_type' => $validated['unit_type'],
+        ]);
 
         return response()->json([
             'message' => 'Extra item created successfully',
-            'extra_item' => $item,
+            'extra_item' => $item->load('inventory'),
         ]);
     }
 
@@ -49,16 +57,23 @@ class FacilityExtraItemController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'inventory_id' => 'required|exists:inventories,id',
             'price_per_unit' => 'required|numeric|min:0',
             'unit_type' => 'required|string|max:50',
         ]);
 
-        $facilityExtraItem->update($validated);
+        $inventory = Inventory::findOrFail($validated['inventory_id']);
+
+        $facilityExtraItem->update([
+            'inventory_id' => $inventory->id,
+            'name' => $inventory->item_name,
+            'price_per_unit' => $validated['price_per_unit'],
+            'unit_type' => $validated['unit_type'],
+        ]);
 
         return response()->json([
             'message' => 'Extra item updated successfully',
-            'extra_item' => $facilityExtraItem->fresh(),
+            'extra_item' => $facilityExtraItem->fresh()->load('inventory'),
         ]);
     }
 

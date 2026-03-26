@@ -9,6 +9,8 @@ use App\Http\Controllers\MemberSubscriptionController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\AgeGroupController;
 use App\Http\Controllers\FacilityController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\FacilityExtraItemController;
 use App\Http\Controllers\MemberRegistrationController;
 use App\Http\Controllers\ReservationController;
@@ -39,6 +41,20 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
     Route::post('/users/{user}/role', [UserController::class, 'assignRole']);
     Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword']);
+});
+
+Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::post('/categories', [CategoryController::class, 'store']);
+    Route::put('/categories/{category}', [CategoryController::class, 'update']);
+    Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);
+});
+
+Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
+    Route::get('/inventories', [InventoryController::class, 'index']);
+    Route::post('/inventories', [InventoryController::class, 'store']);
+    Route::put('/inventories/{inventory}', [InventoryController::class, 'update']);
+    Route::delete('/inventories/{inventory}', [InventoryController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
@@ -99,6 +115,7 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
     Route::get('/admin/reservations/calendar-events', [ReservationController::class, 'adminCalendarEvents']);
     Route::get('/admin/dashboard/analytics', [DashboardController::class, 'analytics']);
     Route::patch('/reservations/{reservation}/status', [ReservationController::class, 'updateStatus']);
+    Route::post('/reservations/{reservation}/extra-items', [ReservationController::class, 'addExtraItems']);
     Route::post('/reservations/{reservation}/payments', [ReservationController::class, 'addPayment']);
 });
 

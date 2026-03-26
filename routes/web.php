@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\FacilityController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\GenaralController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MemberDashboardController;
@@ -121,4 +123,14 @@ Route::middleware(['permission:Manage Settings', config('jetstream.auth_session'
         Route::get('/admin/reservations/approved', 'approvedReservationManagement')->name('approvedReservationManagement');
     });
 
+});
+
+Route::middleware(['permission:Manage Inventory', config('jetstream.auth_session'), 'verified',])->group(function () {
+    Route::controller(CategoryController::class)->group(function () {
+        Route::get('/admin/categories', 'categoryManagement')->name('categoryManagement');
+    });
+
+    Route::controller(InventoryController::class)->group(function () {
+        Route::get('/admin/inventories', 'inventoryManagement')->name('inventoryManagement');
+    });
 });

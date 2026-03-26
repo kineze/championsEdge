@@ -94,6 +94,14 @@
                       <i class="fas fa-xmark"></i>
                     </button>
                     <button
+                      class="inline-grid h-8 w-8 place-items-center rounded-lg text-indigo-600 transition hover:bg-indigo-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                      title="Rent Item"
+                      :disabled="!isApprovedStatus(reservation.status)"
+                      @click="openRentModal(reservation)"
+                    >
+                      <i class="fas fa-box-open"></i>
+                    </button>
+                    <button
                       class="inline-grid h-8 w-8 place-items-center rounded-lg text-cyan-600 transition hover:bg-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-50"
                       title="Add Payment"
                       :disabled="!isApprovedStatus(reservation.status)"
@@ -172,6 +180,12 @@
                       @click="openDetails(reservation)"
                     >
                       <i class="fas fa-eye"></i>
+                    </button>
+                    <button
+                      class="rounded-lg border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-700/70 dark:bg-indigo-900/30 dark:text-indigo-200 dark:hover:bg-indigo-900/50"
+                      @click="openRentModal(reservation)"
+                    >
+                      Rent Item
                     </button>
                     <button
                       class="rounded-lg bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
@@ -309,6 +323,57 @@
       leave-active-class="transition-opacity duration-200"
       leave-to-class="opacity-0"
     >
+      <div v-if="showRentModal && rentReservation" class="fixed inset-0 z-[1650] flex items-center justify-center bg-black/60 p-4">
+        <div class="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Rent Item · #{{ rentReservation.id }}</h3>
+            <button class="inline-grid h-8 w-8 place-items-center rounded-full text-slate-500 transition hover:bg-slate-200 dark:hover:bg-slate-800" @click="closeRentModal">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <form class="mt-4 space-y-3" @submit.prevent="submitRentItem">
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Extra Item</label>
+              <select v-model.number="rentForm.facility_extra_item_id" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-indigo-200 transition focus:ring-2 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200">
+                <option :value="null" disabled>Select item</option>
+                <option v-for="item in rentOptions" :key="item.id" :value="item.id">
+                  {{ item.name }} ({{ formatCurrency(item.price_per_unit) }} / {{ item.unit_type }})
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Units</label>
+              <input v-model.number="rentForm.units" type="number" min="0.01" step="0.01" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-indigo-200 transition focus:ring-2 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200" />
+            </div>
+
+            <div v-if="selectedRentOption" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-950/40 dark:text-slate-300">
+              Unit Price: {{ formatCurrency(selectedRentOption.price_per_unit) }} · Estimated Line Total:
+              {{ formatCurrency(Number(selectedRentOption.price_per_unit || 0) * Number(rentForm.units || 0)) }}
+            </div>
+
+            <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-950/40 dark:text-slate-300">
+              Current Total: {{ formatCurrency(normalizedTotal(rentReservation)) }} · Current Remaining: {{ formatCurrency(remainingBalance(rentReservation)) }}
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+              <button type="button" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800" @click="closeRentModal">Cancel</button>
+              <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60" :disabled="rentSubmitting">
+                {{ rentSubmitting ? 'Saving...' : 'Add Renting Item' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+
+    <transition
+      enter-active-class="transition-opacity duration-200"
+      enter-from-class="opacity-0"
+      leave-active-class="transition-opacity duration-200"
+      leave-to-class="opacity-0"
+    >
       <div v-if="showPaymentModal && paymentReservation" class="fixed inset-0 z-[1700] flex items-center justify-center bg-black/60 p-4">
         <div class="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
           <div class="flex items-center justify-between">
@@ -405,7 +470,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import axios from 'axios'
 import { useToast } from 'vue-toastification'
 
@@ -428,6 +493,14 @@ const actionLoadingId = ref(null)
 const showPaymentModal = ref(false)
 const paymentReservation = ref(null)
 const paymentSubmitting = ref(false)
+const showRentModal = ref(false)
+const rentReservation = ref(null)
+const rentSubmitting = ref(false)
+const rentOptions = ref([])
+const rentForm = ref({
+  facility_extra_item_id: null,
+  units: 1,
+})
 const paymentForm = ref({
   payment_date: '',
   payment_method: 'cash',
@@ -479,15 +552,27 @@ const openDetails = (reservation) => {
   showDetails.value = true
 }
 
+const applyReservationUpdate = (updated) => {
+  reservations.value = reservations.value.map((item) => (item.id === updated.id ? updated : item))
+  approvedReservations.value = approvedReservations.value.map((item) => (item.id === updated.id ? updated : item))
+
+  if (selectedReservation.value?.id === updated.id) {
+    selectedReservation.value = updated
+  }
+  if (paymentReservation.value?.id === updated.id) {
+    paymentReservation.value = updated
+  }
+  if (rentReservation.value?.id === updated.id) {
+    rentReservation.value = updated
+  }
+}
+
 const updateStatus = async (reservation, status) => {
   try {
     actionLoadingId.value = reservation.id
     const res = await axios.patch(`/api/reservations/${reservation.id}/status`, { status })
     const updated = res.data.reservation
-    reservations.value = reservations.value.map((item) => (item.id === updated.id ? updated : item))
-    if (selectedReservation.value?.id === updated.id) {
-      selectedReservation.value = updated
-    }
+    applyReservationUpdate(updated)
     await fetchApprovedReservations()
     toast.success(status === 'reserved' ? 'Reservation approved' : 'Reservation rejected')
   } catch (err) {
@@ -557,6 +642,86 @@ const setPaymentAmount = (value) => {
   paymentForm.value.amount = Number(Number(value || 0).toFixed(2))
 }
 
+const selectedRentOption = computed(() =>
+  rentOptions.value.find((item) => item.id === Number(rentForm.value.facility_extra_item_id)) || null
+)
+
+const openRentModal = async (reservation) => {
+  if (!reservation?.facility_id) {
+    toast.error('Facility is missing for this reservation.')
+    return
+  }
+
+  rentReservation.value = reservation
+  rentForm.value = {
+    facility_extra_item_id: null,
+    units: 1,
+  }
+  rentOptions.value = []
+  showRentModal.value = true
+
+  try {
+    const res = await axios.get(`/api/facilities/${reservation.facility_id}/extra-items`)
+    rentOptions.value = Array.isArray(res.data.extra_items) ? res.data.extra_items : []
+    if (rentOptions.value.length === 0) {
+      toast.error('No facility extra items available for this reservation.')
+    }
+  } catch {
+    toast.error('Failed to load rentable items.')
+  }
+}
+
+const closeRentModal = () => {
+  showRentModal.value = false
+  rentReservation.value = null
+}
+
+const submitRentItem = async () => {
+  if (!rentReservation.value?.id) return
+
+  const facilityExtraItemId = Number(rentForm.value.facility_extra_item_id || 0)
+  const units = Number(rentForm.value.units || 0)
+
+  if (facilityExtraItemId <= 0) {
+    toast.error('Select an extra item.')
+    return
+  }
+
+  if (units <= 0) {
+    toast.error('Enter a valid units value.')
+    return
+  }
+
+  try {
+    rentSubmitting.value = true
+    const payload = {
+      extra_items: [
+        {
+          facility_extra_item_id: facilityExtraItemId,
+          units,
+        },
+      ],
+    }
+
+    const res = await axios.post(`/api/reservations/${rentReservation.value.id}/extra-items`, payload)
+    const updated = res.data.reservation
+    applyReservationUpdate(updated)
+    toast.success('Renting item added successfully')
+    closeRentModal()
+  } catch (err) {
+    if (err.response?.status === 422) {
+      Object.values(err.response.data.errors || {}).flat().forEach((msg) => toast.error(msg))
+      if (!err.response.data.errors) {
+        toast.error(err.response?.data?.message || 'Unable to add renting item')
+      }
+    } else {
+      toast.error(err.response?.data?.message || 'Unable to add renting item')
+    }
+  } finally {
+    rentSubmitting.value = false
+  }
+}
+
 const openPaymentModal = (reservation) => {
   paymentReservation.value = reservation
   paymentForm.value = {
@@ -606,11 +771,7 @@ const submitPayment = async () => {
     const res = await axios.post(`/api/reservations/${paymentReservation.value.id}/payments`, payload)
     const updated = res.data.reservation
 
-    reservations.value = reservations.value.map((item) => (item.id === updated.id ? updated : item))
-    approvedReservations.value = approvedReservations.value.map((item) => (item.id === updated.id ? updated : item))
-    if (selectedReservation.value?.id === updated.id) {
-      selectedReservation.value = updated
-    }
+    applyReservationUpdate(updated)
 
     toast.success('Payment added successfully')
     closePaymentModal()

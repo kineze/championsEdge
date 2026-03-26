@@ -1095,6 +1095,70 @@ class ReservationController extends Controller
         ]);
     }
 
+    public function addExtraItems(Request $request, Reservation $reservation)
+    {
+        $validated = $request->validate([
+            'extra_items' => ['required', 'array', 'min:1'],
+            'extra_items.*.facility_extra_item_id' => ['required', 'integer', 'exists:facility_extra_items,id'],
+            'extra_items.*.units' => ['required', 'numeric', 'min:0.01'],
+        ]);
+
+        if (!in_array($reservation->status, ['reserved', 'active'], true)) {
+            return response()->json([
+                'message' => 'Renting items can be added only for approved reservations.',
+            ], 422);
+        }
+
+        $normalizedExtraItems = $this->normalizeExtraItems($validated['extra_items'], (int) $reservation->facility_id);
+        if (count($normalizedExtraItems) === 0) {
+            return response()->json([
+                'message' => 'No valid renting items selected.',
+                'errors' => [
+                    'extra_items' => ['No valid renting items selected.'],
+                ],
+            ], 422);
+        }
+
+        $currentExtraTotal = (float) $reservation->extraItems()->sum('line_total');
+        $currentTotal = abs((float) ($reservation->reservation_amount ?? 0));
+        $baseAmount = round(max(0, $currentTotal - $currentExtraTotal), 2);
+
+        $this->createReservationExtraItems($reservation, $normalizedExtraItems);
+
+        $allExtraItems = $reservation->extraItems()
+            ->get(['facility_extra_item_id', 'name', 'price_per_unit', 'unit_type', 'units', 'line_total'])
+            ->map(fn (ReservationExtraItem $item) => [
+                'facility_extra_item_id' => (int) $item->facility_extra_item_id,
+                'name' => (string) $item->name,
+                'price_per_unit' => round((float) $item->price_per_unit, 2),
+                'unit_type' => (string) $item->unit_type,
+                'units' => round((float) $item->units, 2),
+                'line_total' => round((float) $item->line_total, 2),
+            ])
+            ->values()
+            ->all();
+
+        $updatedExtraTotal = $this->calculateExtraItemsTotal($allExtraItems);
+        $updatedTotal = round($baseAmount + $updatedExtraTotal, 2);
+
+        $reservation->update([
+            'extra_items' => $allExtraItems,
+            'reservation_amount' => $updatedTotal,
+        ]);
+        $reservation->refreshPaymentStatus();
+
+        return response()->json([
+            'message' => 'Renting items added successfully.',
+            'reservation' => $reservation->fresh([
+                'facility:id,title',
+                'pricePlan:id,range_type,price,facility_id',
+                'user:id,name,email',
+                'extraItems:id,reservation_id,facility_extra_item_id,name,price_per_unit,unit_type,units,line_total',
+                'payments:id,reservation_id,payment_date,payment_method,amount,currency,reference_no,recorded_by,created_at',
+            ]),
+        ], 201);
+    }
+
     public function addPayment(Request $request, Reservation $reservation)
     {
         $validated = $request->validate([

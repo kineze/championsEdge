@@ -118,32 +118,31 @@
         @endcan
 
         @can('Manage Inventory')
-        <!-- Call Center -->
+        <!-- Inventory -->
         <div class="relative sidebar-dropdown"
-            data-subtitle="Fulfilment"
+            data-subtitle="Inventory"
             data-links='[
-              {"label":"Products","href":"{{ url('admin/product-list') }}"},
-              {"label":"suppliers","href":"{{ url('admin/supplier-list') }}"}
-              
+              {"label":"Inventories","href":"{{ route('inventoryManagement') }}"},
+              {"label":"Categories","href":"{{ route('categoryManagement') }}"}
             ]'>
 
           <button class="dropdown-toggle  dark:border-zinc-600 w-full flex items-center gap-3 p-2 dark:hover:bg-zinc-950 transition-all">
             <div class="sidebar-icon-box">
               <i class="fas fa-boxes-stacked" aria-hidden="true"></i>
-              <span class="sr-only">Fulfilment</span>
+              <span class="sr-only">Inventory</span>
             </div>
             <span class="sidebar-label flex-1 text-sm font-medium text-zinc-700 dark:text-white text-left">
-              Fulfilment
+              Inventory
             </span>
             <i class="fas fa-chevron-down text-xs text-zinc-500 sidebar-label"></i>
           </button>
 
           <div class="expanded-only hidden py-1 ml-4 space-y-1">
-            <a href="{{ url('admin/product-list') }}" class="block px-4 py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-md">
-              Products
+            <a href="{{ route('inventoryManagement') }}" class="block px-4 py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-md">
+              Inventories
             </a>
-            <a href="{{ url('admin/supplier-list') }}" class="block px-4 py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-md">
-              suppliers
+            <a href="{{ route('categoryManagement') }}" class="block px-4 py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-md">
+              Categories
             </a>
           </div>
         </div>

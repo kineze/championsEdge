@@ -34,7 +34,7 @@
               <td colspan="4" class="px-4 py-6 text-center text-sm text-slate-500">No extra items found.</td>
             </tr>
             <tr v-for="item in items" :key="item.id" class="hover:bg-slate-50/70 dark:hover:bg-slate-900/40">
-              <td class="px-4 py-3 font-semibold text-slate-800 dark:text-slate-100">{{ item.name }}</td>
+              <td class="px-4 py-3 font-semibold text-slate-800 dark:text-slate-100">{{ item.inventory?.item_name || item.name }}</td>
               <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ item.unit_type }}</td>
               <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ formatCurrency(item.price_per_unit) }}</td>
               <td class="px-4 py-3 text-right">
@@ -82,8 +82,13 @@
 
           <form class="mt-4 grid gap-4" @submit.prevent="saveItem">
             <div>
-              <label class="mb-1.5 inline-block text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-slate-400">Name</label>
-              <input v-model.trim="form.name" type="text" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-cyan-200 transition focus:ring-2 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200" />
+              <label class="mb-1.5 inline-block text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-slate-400">Inventory Item</label>
+              <select v-model.number="form.inventory_id" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-cyan-200 transition focus:ring-2 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200">
+                <option :value="null" disabled>Select an inventory item</option>
+                <option v-for="inventory in inventoryOptions" :key="inventory.id" :value="inventory.id">
+                  {{ inventory.item_name }}
+                </option>
+              </select>
             </div>
 
             <div>
@@ -124,17 +129,18 @@ const props = defineProps({
 const toast = useToast()
 const loading = ref(false)
 const items = ref([])
+const inventoryOptions = ref([])
 const showModal = ref(false)
 const editingId = ref(null)
 const form = ref({
-  name: '',
+  inventory_id: null,
   unit_type: '',
   price_per_unit: null,
 })
 
 const resetForm = () => {
   form.value = {
-    name: '',
+    inventory_id: null,
     unit_type: '',
     price_per_unit: null,
   }
@@ -152,6 +158,15 @@ const fetchItems = async () => {
   }
 }
 
+const fetchInventoryOptions = async () => {
+  try {
+    const res = await axios.get('/api/inventories')
+    inventoryOptions.value = Array.isArray(res.data.inventories) ? res.data.inventories : []
+  } catch {
+    toast.error('Failed to load inventory items.')
+  }
+}
+
 const openCreateModal = () => {
   editingId.value = null
   resetForm()
@@ -161,7 +176,7 @@ const openCreateModal = () => {
 const openEditModal = (item) => {
   editingId.value = item.id
   form.value = {
-    name: item.name || '',
+    inventory_id: item.inventory_id ?? item.inventory?.id ?? null,
     unit_type: item.unit_type || '',
     price_per_unit: Number(item.price_per_unit || 0),
   }
@@ -170,7 +185,7 @@ const openEditModal = (item) => {
 
 const saveItem = async () => {
   const payload = {
-    name: form.value.name,
+    inventory_id: Number(form.value.inventory_id),
     unit_type: form.value.unit_type,
     price_per_unit: Number(form.value.price_per_unit || 0),
   }
@@ -214,5 +229,8 @@ const formatCurrency = (value) => {
   }).format(Number(value || 0))
 }
 
-onMounted(fetchItems)
+onMounted(async () => {
+  await fetchInventoryOptions()
+  await fetchItems()
+})
 </script>

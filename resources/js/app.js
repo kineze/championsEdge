@@ -19,6 +19,8 @@ import FacilityTrainingSessionManager from './components/FacilityTrainingSession
 import FacilityExtraItemManager from './components/FacilityExtraItemManager.vue';
 import SubscriptionManager from './components/SubscriptionManager.vue';
 import ReservationManager from './components/ReservationManager.vue';
+import CategoryManager from './components/CategoryManager.vue';
+import InventoryManager from './components/InventoryManager.vue';
 import AdminBookingCalendar from './components/AdminBookingCalendar.vue';
 import AdminDashboardAnalytics from './components/AdminDashboardAnalytics.vue';
 import HomePage from './site/Home.vue';
@@ -62,6 +64,8 @@ app.use(Toast, {
 .component('facility-extra-item-manager', FacilityExtraItemManager)
 .component('subscription-manager', SubscriptionManager)
 .component('reservation-manager', ReservationManager)
+.component('category-manager', CategoryManager)
+.component('inventory-manager', InventoryManager)
 .component('admin-booking-calendar', AdminBookingCalendar)
 .component('admin-dashboard-analytics', AdminDashboardAnalytics)
 .component('home-page', HomePage)
