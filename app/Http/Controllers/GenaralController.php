@@ -72,7 +72,7 @@ class GenaralController extends Controller
                     ->where('trainer_id', $user->id)
                     ->exists();
 
-                if ($user->hasRole('Trainer') || $hasTrainerSessions) {
+                if ($user->hasRole('Trainer') || ($hasTrainerSessions && !$user->hasRole('Member'))) {
                     return redirect()->route('trainerDashboard');
                 }
 
@@ -109,7 +109,7 @@ class GenaralController extends Controller
             ->where('trainer_id', $user->id)
             ->exists();
 
-        if ($user->hasRole('Trainer') || $hasTrainerSessions) {
+        if ($user->hasRole('Trainer') || ($hasTrainerSessions && !$user->hasRole('Member'))) {
             return redirect()->route('trainerDashboard');
         }
 
